@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     virustotal_api_key: str = ""
 
     # CORS — set to your Vercel URL after deploying frontend
-    cors_origins: str = "http://localhost:5173,http://localhost:3000,http://localhost:80"
+    cors_origins: str = "http://localhost:5173,http://localhost:3000,https://aegis-frontend.vercel.app"
 
     # File Upload
     max_upload_size_mb: int = 5
