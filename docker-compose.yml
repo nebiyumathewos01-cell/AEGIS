@@ -1,0 +1,58 @@
+version: "3.9"
+
+services:
+  # ── Backend (FastAPI) ────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cyberexplain-backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:///./cyberexplain.db
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - CORS_ORIGINS=http://localhost:5173,http://localhost:80,http://frontend
+    volumes:
+      - backend_data:/app/data
+    ports:
+      - "8000:8000"
+    depends_on:
+      - ollama
+    networks:
+      - cyberexplain
+
+  # ── Frontend (React + Vite via Nginx) ────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: cyberexplain-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - cyberexplain
+
+  # ── Ollama (local LLM) ───────────────────────────────────────────────────
+  # Comment out if you don't have a GPU or want to use the rule-based fallback
+  ollama:
+    image: ollama/ollama:latest
+    container_name: cyberexplain-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - cyberexplain
+
+volumes:
+  backend_data:
+  ollama_data:
+
+networks:
+  cyberexplain:
+    driver: bridge
