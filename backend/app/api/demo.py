@@ -1,8 +1,10 @@
-"""Demo scenarios — 5 realistic security alert examples."""
+"""Demo scenarios — scoped to authenticated user."""
 from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from app.api.deps import get_current_user
 from app.database import get_db
+from app.models.user import User
 from app.schemas.alert import AlertCreate
 from app.services.alert_service import create_alert, save_analysis
 from app.parsers import parse_alert
@@ -15,7 +17,7 @@ SCENARIOS = [
     {
         "id": "ssh_brute_force", "title": "SSH Brute-Force Attack",
         "description": "25 failed SSH login attempts against admin from a single source IP.",
-        "source": "auth", "risk_level_hint": "HIGH",
+        "source": "auth", "risk_level_hint": "CRITICAL",
         "raw": "\n".join([
             f"Jun 14 10:31:{i:02d} webserver sshd[1234]: Failed password for admin from 192.168.1.50 port {54312+i} ssh2"
             for i in range(25)
@@ -38,7 +40,7 @@ SCENARIOS = [
     },
     {
         "id": "suricata_c2", "title": "Suspected C2 Communication",
-        "description": "Suricata IDS alert for botnet C2 beacon traffic.",
+        "description": "Suricata IDS alert for botnet C2 beacon traffic from an internal host.",
         "source": "suricata", "risk_level_hint": "CRITICAL",
         "raw": (
             "06/14/2024-11:42:07.221893  [**] [1:2013028:7] ET TROJAN Possible Botnet C2 HTTP POST "
@@ -60,8 +62,6 @@ SCENARIOS = [
             "Jun 14 14:22:21 mailserver sshd[4521]: Failed password for invalid user root from 203.0.113.22 port 51237 ssh2\n"
             "Jun 14 14:22:25 mailserver sshd[4522]: Failed password for invalid user administrator from 198.51.100.9 port 51238 ssh2\n"
             "Jun 14 14:22:28 mailserver sshd[4522]: Failed password for invalid user administrator from 203.0.113.12 port 51239 ssh2\n"
-            "Jun 14 14:22:31 mailserver sshd[4523]: Failed password for ubuntu from 198.51.100.7 port 51240 ssh2\n"
-            "Jun 14 14:22:35 mailserver sshd[4523]: Failed password for ubuntu from 203.0.113.15 port 51241 ssh2\n"
         ),
     },
     {
@@ -80,14 +80,14 @@ SCENARIOS = [
 
 
 @router.get("/scenarios")
-def list_scenarios():
+def list_scenarios(current_user: User = Depends(get_current_user)):
     return [{"id": s["id"], "title": s["title"], "description": s["description"],
              "source": s["source"], "risk_level_hint": s["risk_level_hint"]}
             for s in SCENARIOS]
 
 
 @router.get("/scenarios/{sid}/raw")
-def get_raw(sid: str):
+def get_raw(sid: str, current_user: User = Depends(get_current_user)):
     s = next((x for x in SCENARIOS if x["id"] == sid), None)
     if not s:
         raise HTTPException(404, "Scenario not found")
@@ -95,17 +95,20 @@ def get_raw(sid: str):
 
 
 @router.post("/scenarios/{sid}/load")
-async def load_scenario(sid: str, db: Session = Depends(get_db)):
+async def load_scenario(
+    sid: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     s = next((x for x in SCENARIOS if x["id"] == sid), None)
     if not s:
         raise HTTPException(404, "Scenario not found")
-    payload = AlertCreate(raw_alert=s["raw"], source=s["source"])
-    alert = create_alert(db, payload)
-    # Run AI analysis
+    alert = create_alert(db, AlertCreate(raw_alert=s["raw"], source=s["source"]),
+                         owner_id=current_user.id)
     parsed = parse_alert(alert.raw_alert, source_hint=alert.source)
     rule_result = RuleEngine().analyze(parsed)
     ai_result = await AIAnalyzer().analyze(parsed, rule_result)
-    save_analysis(db, alert_id=alert.id,
+    save_analysis(db, alert_id=alert.id, owner_id=current_user.id,
                   summary=ai_result.summary,
                   threat_interpretation=ai_result.threat_interpretation,
                   evidence=ai_result.evidence,

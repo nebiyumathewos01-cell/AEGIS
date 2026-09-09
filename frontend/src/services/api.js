@@ -1,13 +1,41 @@
 import axios from 'axios'
 
-// In production (Vercel), VITE_API_URL is set to your Railway backend URL.
-// In development, Vite proxy handles /api → localhost:8000.
 const BASE = import.meta.env.VITE_API_URL || ''
 
 const api = axios.create({
   baseURL: `${BASE}/api`,
   headers: { 'Content-Type': 'application/json' },
 })
+
+// Attach JWT token to every request
+api.interceptors.request.use(config => {
+  const token = localStorage.getItem('aegis_token')
+  if (token) config.headers.Authorization = `Bearer ${token}`
+  return config
+})
+
+// Auto-logout on 401
+api.interceptors.response.use(
+  res => res,
+  err => {
+    if (err.response?.status === 401) {
+      localStorage.removeItem('aegis_token')
+      localStorage.removeItem('aegis_user')
+      window.location.href = '/login'
+    }
+    return Promise.reject(err)
+  }
+)
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+export const register = (data) =>
+  api.post('/auth/register', data).then(r => r.data)
+
+export const login = (data) =>
+  api.post('/auth/login/json', data).then(r => r.data)
+
+export const getMe = () =>
+  api.get('/auth/me').then(r => r.data)
 
 // ── Alerts ────────────────────────────────────────────────────────────────────
 export const getAlerts = (params = {}) =>

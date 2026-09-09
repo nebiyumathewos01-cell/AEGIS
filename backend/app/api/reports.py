@@ -2,14 +2,20 @@ import json
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from app.api.deps import get_current_user
 from app.database import get_db
+from app.models.user import User
 from app.services.alert_service import get_alert
 
 router = APIRouter(prefix="/api/reports", tags=["reports"])
 
 @router.get("/{alert_id}")
-def get_report(alert_id: int, db: Session = Depends(get_db)):
-    alert = get_alert(db, alert_id)
+def get_report(
+    alert_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    alert = get_alert(db, alert_id, owner_id=current_user.id)
     if not alert:
         raise HTTPException(404, "Alert not found")
     analysis = None
@@ -19,7 +25,8 @@ def get_report(alert_id: int, db: Session = Depends(get_db)):
         analysis = {"summary": a.summary, "threat_interpretation": a.threat_interpretation,
                     "evidence": a.evidence, "risk_explanation": a.risk_explanation,
                     "recommendations": recs, "ai_model": a.ai_model,
-                    "is_ai_generated": a.is_ai_generated, "created_at": a.created_at.isoformat()}
+                    "is_ai_generated": a.is_ai_generated,
+                    "created_at": a.created_at.isoformat()}
     notes = [{"id": n.id, "note": n.note, "analyst": n.analyst,
               "created_at": n.created_at.isoformat()} for n in (alert.notes or [])]
     return {
@@ -35,4 +42,5 @@ def get_report(alert_id: int, db: Session = Depends(get_db)):
         "parsed_data": json.loads(alert.parsed_data) if alert.parsed_data else {},
         "risk_factors": json.loads(alert.risk_factors) if alert.risk_factors else [],
         "analysis": analysis, "notes": notes,
+        "analyst": {"name": current_user.full_name, "username": current_user.username},
     }

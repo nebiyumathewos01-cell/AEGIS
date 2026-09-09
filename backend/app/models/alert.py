@@ -9,6 +9,9 @@ class Alert(Base):
     __tablename__ = "alerts"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    owner_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False
+    )
     timestamp: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     source: Mapped[str] = mapped_column(String(64))
     alert_type: Mapped[str] = mapped_column(String(128))
@@ -25,12 +28,19 @@ class Alert(Base):
     risk_level: Mapped[str] = mapped_column(String(16), default="LOW")
     risk_factors: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(String(32), default="new")
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc),
-                                                  onupdate=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc)
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
-    analysis: Mapped[Analysis | None] = relationship("Analysis", back_populates="alert",
-                                                      uselist=False, cascade="all, delete-orphan")
-    notes: Mapped[list[InvestigationNote]] = relationship("InvestigationNote", back_populates="alert",
-                                                           cascade="all, delete-orphan",
-                                                           order_by="InvestigationNote.created_at")
+    owner: Mapped[User] = relationship("User", back_populates="alerts")
+    analysis: Mapped[Analysis | None] = relationship(
+        "Analysis", back_populates="alert", uselist=False, cascade="all, delete-orphan"
+    )
+    notes: Mapped[list[InvestigationNote]] = relationship(
+        "InvestigationNote", back_populates="alert",
+        cascade="all, delete-orphan", order_by="InvestigationNote.created_at",
+    )

@@ -1,5 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { AuthProvider } from './context/AuthContext'
+import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
+import Login from './pages/Login'
+import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import Alerts from './pages/Alerts'
 import AlertDetail from './pages/AlertDetail'
@@ -10,19 +14,32 @@ import Reports from './pages/Reports'
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="alerts" element={<Alerts />} />
-          <Route path="alerts/new" element={<NewAlert />} />
-          <Route path="alerts/:id" element={<AlertDetail />} />
-          <Route path="investigations" element={<Investigations />} />
-          <Route path="threat-intelligence" element={<ThreatIntelligence />} />
-          <Route path="reports/:id" element={<Reports />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Public */}
+          <Route path="/login"    element={<Login />} />
+          <Route path="/register" element={<Register />} />
+
+          {/* Protected */}
+          <Route path="/" element={
+            <ProtectedRoute>
+              <Layout />
+            </ProtectedRoute>
+          }>
+            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="dashboard"           element={<Dashboard />} />
+            <Route path="alerts"              element={<Alerts />} />
+            <Route path="alerts/new"          element={<NewAlert />} />
+            <Route path="alerts/:id"          element={<AlertDetail />} />
+            <Route path="investigations"      element={<Investigations />} />
+            <Route path="threat-intelligence" element={<ThreatIntelligence />} />
+            <Route path="reports/:id"         element={<Reports />} />
+          </Route>
+
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   )
 }

@@ -1,3 +1,3 @@
-from app.api import alerts, dashboard, demo, investigations, reports, threat_intelligence
+from app.api import alerts, auth, dashboard, demo, investigations, reports, threat_intelligence
 
-__all__ = ["alerts", "dashboard", "demo", "investigations", "reports", "threat_intelligence"]
+__all__ = ["alerts", "auth", "dashboard", "demo", "investigations", "reports", "threat_intelligence"]
