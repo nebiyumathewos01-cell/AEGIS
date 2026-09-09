@@ -34,21 +34,29 @@ for r in (auth.router, alerts.router, dashboard.router, demo.router,
 
 @app.on_event("startup")
 def on_startup():
-    # Delete old DB if it doesn't have the users table (schema migration)
     import os
-    from sqlalchemy import inspect
+    log = logging.getLogger(__name__)
     try:
+        from sqlalchemy import inspect as sa_inspect
         from app.database import engine
-        insp = inspect(engine)
-        if "users" not in insp.get_table_names():
-            db_path = settings.database_url.replace("sqlite:///", "").replace("sqlite:////", "/")
+        insp = sa_inspect(engine)
+        existing = insp.get_table_names()
+        log.info("Existing tables: %s", existing)
+        if "users" not in existing:
+            log.info("users table missing — recreating database")
+            db_path = settings.database_url.replace("sqlite:///", "")
+            if db_path.startswith("/"):
+                pass
+            else:
+                db_path = db_path.lstrip("/")
             if os.path.exists(db_path):
                 os.remove(db_path)
-    except Exception:
-        pass
+                log.info("Old database removed: %s", db_path)
+    except Exception as e:
+        log.warning("Schema check failed: %s", e)
     init_db()
     os.makedirs(settings.upload_dir, exist_ok=True)
-    logging.getLogger(__name__).info("AEGIS v2.0 started")
+    log.info("AEGIS v2.0 started — tables ready")
 
 
 @app.get("/api/health")
