@@ -34,6 +34,18 @@ for r in (auth.router, alerts.router, dashboard.router, demo.router,
 
 @app.on_event("startup")
 def on_startup():
+    # Delete old DB if it doesn't have the users table (schema migration)
+    import os
+    from sqlalchemy import inspect
+    try:
+        from app.database import engine
+        insp = inspect(engine)
+        if "users" not in insp.get_table_names():
+            db_path = settings.database_url.replace("sqlite:///", "").replace("sqlite:////", "/")
+            if os.path.exists(db_path):
+                os.remove(db_path)
+    except Exception:
+        pass
     init_db()
     os.makedirs(settings.upload_dir, exist_ok=True)
     logging.getLogger(__name__).info("AEGIS v2.0 started")
