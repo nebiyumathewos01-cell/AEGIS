@@ -36,27 +36,16 @@ for r in (auth.router, alerts.router, dashboard.router, demo.router,
 def on_startup():
     import os
     log = logging.getLogger(__name__)
+    # Force recreate all tables — handles schema changes cleanly
     try:
-        from sqlalchemy import inspect as sa_inspect
-        from app.database import engine
-        insp = sa_inspect(engine)
-        existing = insp.get_table_names()
-        log.info("Existing tables: %s", existing)
-        if "users" not in existing:
-            log.info("users table missing — recreating database")
-            db_path = settings.database_url.replace("sqlite:///", "")
-            if db_path.startswith("/"):
-                pass
-            else:
-                db_path = db_path.lstrip("/")
-            if os.path.exists(db_path):
-                os.remove(db_path)
-                log.info("Old database removed: %s", db_path)
+        from app.database import engine, Base
+        Base.metadata.drop_all(bind=engine)
+        log.info("Old tables dropped")
     except Exception as e:
-        log.warning("Schema check failed: %s", e)
+        log.warning("Drop failed (ok on first run): %s", e)
     init_db()
     os.makedirs(settings.upload_dir, exist_ok=True)
-    log.info("AEGIS v2.0 started — tables ready")
+    log.info("AEGIS v2.0 started — all tables ready")
 
 
 @app.get("/api/health")
