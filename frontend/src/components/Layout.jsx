@@ -2,10 +2,11 @@ import { useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Shield, Search, BookOpen,
-  AlertTriangle, Plus, LogOut, User,
-  ChevronDown, Bell, Menu, X
+  AlertTriangle, Plus, LogOut,
+  ChevronDown, Menu, X
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import Logo from './Logo'
 
 const NAV = [
   { to: '/dashboard',           icon: LayoutDashboard, label: 'Dashboard' },
@@ -49,16 +50,10 @@ export default function Layout() {
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
         {/* Logo */}
-        <div className="flex items-center gap-2.5 px-4 py-5 border-b border-cyber-border">
-          <div className="p-1.5 bg-cyber-accent/10 rounded-lg border border-cyber-accent/20">
-            <Shield className="text-cyber-accent w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-sm font-bold text-cyber-text tracking-wide">AEGIS</p>
-            <p className="text-[9px] text-cyber-muted font-mono leading-tight">Alert Evaluation & Guided Investigation</p>
-          </div>
+        <div className="flex items-center justify-between px-4 py-4 border-b border-cyber-border">
+          <Logo size="sm" />
           <button
-            className="ml-auto lg:hidden text-cyber-muted hover:text-cyber-text"
+            className="lg:hidden text-cyber-muted hover:text-cyber-text"
             onClick={() => setSidebarOpen(false)}
           >
             <X className="w-4 h-4" />

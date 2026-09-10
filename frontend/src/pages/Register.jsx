@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Shield, Mail, Lock, Eye, EyeOff, User, AlertCircle, UserPlus, Check } from 'lucide-react'
+import Logo from '../components/Logo'
 import { register } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import Spinner from '../components/Spinner'
@@ -54,14 +55,8 @@ export default function Register() {
     <div className="min-h-screen bg-cyber-bg flex items-center justify-center p-6">
       <div className="w-full max-w-md">
         {/* Logo */}
-        <div className="flex items-center gap-3 mb-8">
-          <div className="p-2.5 bg-cyber-accent/10 rounded-xl border border-cyber-accent/20">
-            <Shield className="w-6 h-6 text-cyber-accent" />
-          </div>
-          <div>
-            <p className="text-lg font-bold text-cyber-text">AEGIS</p>
-            <p className="text-[10px] text-cyber-muted font-mono">Alert Evaluation & Guided Investigation System</p>
-          </div>
+        <div className="mb-8">
+          <Logo size="sm" />
         </div>
 
         <div className="card">

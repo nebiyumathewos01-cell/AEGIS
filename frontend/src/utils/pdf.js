@@ -65,18 +65,28 @@ export function generatePDF(reportData) {
 
   // ── Cover header ──────────────────────────────────────────────────────────
   doc.setFillColor(13, 17, 23)
-  doc.rect(0, 0, pageW, 28, 'F')
+  doc.rect(0, 0, pageW, 32, 'F')
+
+  // Logo image in PDF header
+  try {
+    const img = new Image()
+    img.src = '/logo.svg'
+    doc.addImage(img, 'SVG', margin, 4, 22, 22)
+  } catch (_) {
+    // logo not available — skip
+  }
+
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(16)
+  doc.setFontSize(18)
   doc.setTextColor(88, 166, 255)
-  doc.text('AEGIS', margin, 12)
-  doc.setFontSize(10)
+  doc.text('AEGIS', margin + 26, 13)
+  doc.setFontSize(8)
   doc.setTextColor(139, 148, 158)
   doc.setFont('helvetica', 'normal')
-  doc.text('Alert Evaluation & Guided Investigation System', margin, 19)
-  doc.text(`Generated: ${new Date(report_generated_at).toLocaleString()}`, pageW - margin, 19, { align: 'right' })
+  doc.text('Alert Evaluation & Guided Investigation System', margin + 26, 20)
+  doc.text(`Generated: ${new Date(report_generated_at).toLocaleString()}`, pageW - margin, 20, { align: 'right' })
 
-  y = 36
+  y = 40
 
   // ── Alert information ─────────────────────────────────────────────────────
   heading2('Alert Information')

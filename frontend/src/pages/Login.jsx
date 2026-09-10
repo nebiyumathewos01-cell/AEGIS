@@ -4,6 +4,7 @@ import {
   Shield, Mail, Lock, Eye, EyeOff,
   AlertCircle, LogIn, Activity, Server, Search
 } from 'lucide-react'
+import Logo from '../components/Logo'
 import { login } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import Spinner from '../components/Spinner'
@@ -50,16 +51,8 @@ export default function Login() {
       <div className="hidden lg:flex lg:w-[480px] xl:w-[540px] shrink-0 flex-col
                       bg-cyber-surface border-r border-cyber-border p-10 xl:p-14">
         {/* Brand */}
-        <div className="flex items-center gap-3 mb-12">
-          <div className="p-2.5 bg-cyber-accent/10 rounded-xl border border-cyber-accent/20">
-            <Shield className="w-7 h-7 text-cyber-accent" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-cyber-text tracking-tight">AEGIS</h1>
-            <p className="text-[11px] text-cyber-muted font-mono">
-              Alert Evaluation &amp; Guided Investigation System
-            </p>
-          </div>
+        <div className="mb-12">
+          <Logo size="md" />
         </div>
 
         {/* Headline */}
@@ -101,14 +94,8 @@ export default function Login() {
         <div className="w-full max-w-md">
 
           {/* Mobile brand */}
-          <div className="flex items-center gap-2.5 mb-10 lg:hidden">
-            <Shield className="w-6 h-6 text-cyber-accent" />
-            <div>
-              <p className="font-bold text-cyber-text">AEGIS</p>
-              <p className="text-[10px] text-cyber-muted font-mono">
-                Alert Evaluation &amp; Guided Investigation System
-              </p>
-            </div>
+          <div className="mb-10 lg:hidden">
+            <Logo size="sm" />
           </div>
 
           {/* Title */}
