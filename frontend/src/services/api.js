@@ -37,6 +37,10 @@ export const login = (data) =>
 export const getMe = () =>
   api.get('/auth/me').then(r => r.data)
 
+// ── Sources ───────────────────────────────────────────────────────────────────
+export const getAlertSources = () =>
+  api.get('/alerts/sources').then(r => r.data)
+
 // ── Alerts ────────────────────────────────────────────────────────────────────
 export const getAlerts = (params = {}) =>
   api.get('/alerts', { params }).then(r => r.data)

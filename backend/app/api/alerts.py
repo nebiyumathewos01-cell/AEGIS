@@ -25,6 +25,13 @@ _rule_engine = RuleEngine()
 _ai_analyzer = AIAnalyzer()
 
 
+@router.get("/sources")
+def list_sources():
+    """Return all 20 supported log sources."""
+    from app.parsers import get_all_sources
+    return get_all_sources()
+
+
 def _ser(alert):
     data = {
         "id": alert.id,

@@ -1,23 +1,88 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Upload, Play, ArrowLeft, FileText, Zap, Database } from 'lucide-react'
+import { Upload, Play, ArrowLeft, FileText, Zap, Database, ChevronDown } from 'lucide-react'
 import {
   submitAlert, uploadAlertFile,
-  getDemoScenarios, getDemoRaw, loadDemoScenario, loadAllScenarios,
+  getDemoScenarios, getDemoRaw, loadDemoScenario,
+  loadAllScenarios, getAlertSources,
 } from '../services/api'
 import Spinner from '../components/Spinner'
 import PageHeader from '../components/PageHeader'
 
-const SOURCES = [
-  { value: 'generic',  label: 'Auto-detect' },
-  { value: 'auth',     label: 'Linux Auth Log' },
-  { value: 'nmap',     label: 'Nmap Scan' },
-  { value: 'suricata', label: 'Suricata IDS' },
-]
-
 const RISK_COLORS = {
   LOW: 'text-risk-low', MEDIUM: 'text-risk-medium',
   HIGH: 'text-risk-high', CRITICAL: 'text-risk-critical',
+}
+
+// Fallback sources if API not available
+const FALLBACK_SOURCES = [
+  { value: 'generic',       label: 'Auto-detect',              category: 'General' },
+  { value: 'auth',          label: 'Linux Auth Log (SSH)',      category: 'Linux' },
+  { value: 'nmap',          label: 'Nmap Scan',                 category: 'Network' },
+  { value: 'suricata',      label: 'Suricata IDS',              category: 'IDS/IPS' },
+  { value: 'firewall',      label: 'Firewall (iptables/pfSense)',category: 'Firewall' },
+  { value: 'apache',        label: 'Apache / Nginx',            category: 'Web' },
+  { value: 'windows_event', label: 'Windows Event Log',         category: 'Windows' },
+  { value: 'aws_cloudtrail','label': 'AWS CloudTrail',          category: 'Cloud' },
+]
+
+function SourceSelect({ value, onChange, sources }) {
+  const [open, setOpen] = useState(false)
+
+  // Group by category
+  const grouped = sources.reduce((acc, s) => {
+    if (!acc[s.category]) acc[s.category] = []
+    acc[s.category].push(s)
+    return acc
+  }, {})
+
+  const selected = sources.find(s => s.value === value) || sources[0]
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        className="input flex items-center justify-between gap-2 w-full text-left cursor-pointer"
+      >
+        <div>
+          <span className="text-cyber-text">{selected?.label}</span>
+          {selected?.category && selected.category !== 'General' && (
+            <span className="ml-2 text-[10px] text-cyber-muted uppercase font-mono bg-cyber-border px-1.5 py-0.5 rounded">
+              {selected.category}
+            </span>
+          )}
+        </div>
+        <ChevronDown className={`w-4 h-4 text-cyber-muted shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && (
+        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-cyber-surface border border-cyber-border
+                        rounded-xl shadow-2xl max-h-80 overflow-y-auto">
+          {Object.entries(grouped).map(([category, items]) => (
+            <div key={category}>
+              <div className="px-3 py-1.5 text-[10px] font-bold text-cyber-muted uppercase tracking-widest
+                              bg-cyber-bg/50 border-b border-cyber-border/50 sticky top-0">
+                {category}
+              </div>
+              {items.map(s => (
+                <button
+                  key={s.value}
+                  type="button"
+                  onClick={() => { onChange(s.value); setOpen(false) }}
+                  className={`w-full text-left px-4 py-2.5 text-sm transition-colors hover:bg-cyber-border/30 ${
+                    value === s.value ? 'text-cyber-accent font-medium bg-cyber-accent/5' : 'text-cyber-text'
+                  }`}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default function NewAlert() {
@@ -33,9 +98,11 @@ export default function NewAlert() {
   const [loadingAll, setLoadingAll] = useState(false)
   const [error, setError]           = useState('')
   const [scenarios, setScenarios]   = useState([])
+  const [sources, setSources]       = useState(FALLBACK_SOURCES)
 
   useEffect(() => {
     getDemoScenarios().then(setScenarios).catch(() => {})
+    getAlertSources().then(setSources).catch(() => {})
   }, [])
 
   async function handlePaste(e) {
@@ -95,7 +162,7 @@ export default function NewAlert() {
     <div className="p-6 max-w-3xl">
       <PageHeader
         title="Submit Alert"
-        subtitle="Parse, analyze, and triage a new security alert"
+        subtitle={`${sources.length} log sources supported — paste, upload, or load a demo`}
         actions={
           <button onClick={() => navigate('/alerts')} className="btn-ghost flex items-center gap-1.5 text-sm">
             <ArrowLeft className="w-4 h-4" /> Back
@@ -130,12 +197,13 @@ export default function NewAlert() {
 
       {/* Paste mode */}
       {mode === 'paste' && (
-        <form onSubmit={handlePaste} className="card space-y-4">
+        <form onSubmit={handlePaste} className="card space-y-5">
           <div>
-            <label className="label">Log Source</label>
-            <select className="input w-48" value={source} onChange={e => setSource(e.target.value)}>
-              {SOURCES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-            </select>
+            <label className="label">Log Source ({sources.length} supported)</label>
+            <SourceSelect value={source} onChange={setSource} sources={sources} />
+            <p className="text-xs text-cyber-muted mt-1.5">
+              Select "Auto-detect" to let AEGIS identify the log format automatically.
+            </p>
           </div>
           <div>
             <label className="label">Alert / Log Content</label>
@@ -158,12 +226,10 @@ export default function NewAlert() {
 
       {/* Upload mode */}
       {mode === 'upload' && (
-        <form onSubmit={handleUpload} className="card space-y-4">
+        <form onSubmit={handleUpload} className="card space-y-5">
           <div>
             <label className="label">Log Source</label>
-            <select className="input w-48" value={source} onChange={e => setSource(e.target.value)}>
-              {SOURCES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-            </select>
+            <SourceSelect value={source} onChange={setSource} sources={sources} />
           </div>
           <div>
             <label className="label">Upload .log or .txt file (max 5 MB)</label>
@@ -191,18 +257,16 @@ export default function NewAlert() {
       {/* Demo scenarios */}
       {mode === 'demo' && (
         <div className="space-y-4">
-          {/* Load all button */}
+          {/* Load all */}
           <div className="card bg-cyber-accent/5 border-cyber-accent/20 flex items-center justify-between gap-4">
             <div>
               <p className="font-semibold text-sm text-cyber-text">Load All 20 Scenarios</p>
               <p className="text-xs text-cyber-muted mt-0.5">
-                Populate your workspace with all demo alerts at once — great for a full demonstration.
+                Populate your workspace instantly with all demo alerts — perfect for a full demonstration.
               </p>
             </div>
-            <button
-              className="btn-primary flex items-center gap-2 text-sm shrink-0"
-              onClick={loadAll}
-              disabled={loadingAll}>
+            <button className="btn-primary flex items-center gap-2 text-sm shrink-0"
+              onClick={loadAll} disabled={loadingAll}>
               {loadingAll ? <Spinner size="sm" /> : <Database className="w-4 h-4" />}
               {loadingAll ? 'Loading...' : 'Load All'}
             </button>
@@ -211,7 +275,7 @@ export default function NewAlert() {
           {/* Individual scenarios */}
           <div className="space-y-3">
             {scenarios.map(s => (
-              <div key={s.id} className="card flex items-start justify-between gap-4">
+              <div key={s.id} className="card flex items-start justify-between gap-4 hover:border-cyber-border transition-colors">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <p className="font-semibold text-sm text-cyber-text">{s.title}</p>
@@ -225,20 +289,42 @@ export default function NewAlert() {
                   <p className="text-xs text-cyber-muted leading-relaxed">{s.description}</p>
                 </div>
                 <div className="flex flex-col gap-2 shrink-0">
-                  <button
-                    className="btn-primary flex items-center gap-1.5 text-xs px-3 py-1.5"
-                    onClick={() => loadDemo(s.id)}
-                    disabled={loadingDemo === s.id}>
+                  <button className="btn-primary flex items-center gap-1.5 text-xs px-3 py-1.5"
+                    onClick={() => loadDemo(s.id)} disabled={loadingDemo === s.id}>
                     {loadingDemo === s.id ? <Spinner size="sm" /> : <Zap className="w-3.5 h-3.5" />}
                     Load &amp; Analyze
                   </button>
-                  <button
-                    className="btn-secondary text-xs px-3 py-1.5"
+                  <button className="btn-secondary text-xs px-3 py-1.5"
                     onClick={() => previewDemo(s.id)}>
                     Preview Log
                   </button>
                 </div>
               </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Supported sources reference */}
+      {mode === 'paste' && sources.length > 4 && (
+        <div className="mt-5 card bg-cyber-bg">
+          <p className="text-xs font-semibold text-cyber-muted uppercase tracking-widest mb-3">
+            All {sources.length} Supported Log Sources
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+            {sources.filter(s => s.value !== 'generic').map(s => (
+              <button
+                key={s.value}
+                type="button"
+                onClick={() => setSource(s.value)}
+                className={`text-left px-2.5 py-1.5 rounded-lg text-xs transition-colors border ${
+                  source === s.value
+                    ? 'border-cyber-accent/40 text-cyber-accent bg-cyber-accent/5'
+                    : 'border-cyber-border text-cyber-muted hover:text-cyber-text hover:border-cyber-muted'
+                }`}
+              >
+                {s.label}
+              </button>
             ))}
           </div>
         </div>
