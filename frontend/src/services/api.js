@@ -65,12 +65,22 @@ export const updateAlertStatus = (id, status) =>
 export const getDashboardStats = () =>
   api.get('/dashboard/stats').then(r => r.data)
 
+// ── Audit ─────────────────────────────────────────────────────────────────────
+export const getAuditLogs = (params = {}) =>
+  api.get('/audit/logs', { params }).then(r => r.data)
+
+export const getAuditSummary = () =>
+  api.get('/audit/summary').then(r => r.data)
+
 // ── Demo ──────────────────────────────────────────────────────────────────────
 export const getDemoScenarios = () =>
   api.get('/demo/scenarios').then(r => r.data)
 
 export const loadDemoScenario = (id) =>
   api.post(`/demo/scenarios/${id}/load`).then(r => r.data)
+
+export const loadAllScenarios = () =>
+  api.post('/demo/load-all').then(r => r.data)
 
 export const getDemoRaw = (id) =>
   api.get(`/demo/scenarios/${id}/raw`).then(r => r.data)

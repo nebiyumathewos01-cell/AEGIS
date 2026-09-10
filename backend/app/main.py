@@ -1,4 +1,4 @@
-"""AEGIS — Alert Evaluation & Guided Investigation System."""
+"""AEGIS — Alert Evaluation & Guided Investigation System v2.0"""
 from __future__ import annotations
 import logging, os
 from fastapi import FastAPI
@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.database import init_db
 import app.models  # noqa
-from app.api import alerts, auth, dashboard, demo, investigations, reports, threat_intelligence
+from app.api import alerts, auth, audit, dashboard, demo, investigations, reports, threat_intelligence
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 settings = get_settings()
@@ -27,25 +27,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-for r in (auth.router, alerts.router, dashboard.router, demo.router,
-          investigations.router, reports.router, threat_intelligence.router):
+for r in (auth.router, alerts.router, audit.router, dashboard.router,
+          demo.router, investigations.router, reports.router,
+          threat_intelligence.router):
     app.include_router(r)
 
 
 @app.on_event("startup")
 def on_startup():
-    import os
     log = logging.getLogger(__name__)
-    # Force recreate all tables — handles schema changes cleanly
     try:
+        from sqlalchemy import inspect as sa_inspect
         from app.database import engine, Base
-        Base.metadata.drop_all(bind=engine)
-        log.info("Old tables dropped")
+        insp = sa_inspect(engine)
+        existing = insp.get_table_names()
+        if "users" not in existing or "audit_logs" not in existing:
+            log.info("Schema outdated — recreating all tables")
+            Base.metadata.drop_all(bind=engine)
     except Exception as e:
-        log.warning("Drop failed (ok on first run): %s", e)
+        log.warning("Schema check: %s", e)
     init_db()
     os.makedirs(settings.upload_dir, exist_ok=True)
-    log.info("AEGIS v2.0 started — all tables ready")
+    log.info("AEGIS v2.0 started")
 
 
 @app.get("/api/health")

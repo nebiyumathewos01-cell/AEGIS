@@ -11,21 +11,17 @@ import NewAlert from './pages/NewAlert'
 import ThreatIntelligence from './pages/ThreatIntelligence'
 import Investigations from './pages/Investigations'
 import Reports from './pages/Reports'
+import AuditLog from './pages/AuditLog'
 
 export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Public */}
           <Route path="/login"    element={<Login />} />
           <Route path="/register" element={<Register />} />
-
-          {/* Protected */}
           <Route path="/" element={
-            <ProtectedRoute>
-              <Layout />
-            </ProtectedRoute>
+            <ProtectedRoute><Layout /></ProtectedRoute>
           }>
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard"           element={<Dashboard />} />
@@ -35,8 +31,8 @@ export default function App() {
             <Route path="investigations"      element={<Investigations />} />
             <Route path="threat-intelligence" element={<ThreatIntelligence />} />
             <Route path="reports/:id"         element={<Reports />} />
+            <Route path="audit"               element={<AuditLog />} />
           </Route>
-
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </BrowserRouter>

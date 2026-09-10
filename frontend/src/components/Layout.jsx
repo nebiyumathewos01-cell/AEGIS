@@ -12,6 +12,7 @@ const NAV = [
   { to: '/alerts',              icon: AlertTriangle,   label: 'Alerts' },
   { to: '/investigations',      icon: BookOpen,        label: 'Investigations' },
   { to: '/threat-intelligence', icon: Search,          label: 'Threat Intel' },
+  { to: '/audit',               icon: Shield,          label: 'Audit Log' },
 ]
 
 export default function Layout() {
