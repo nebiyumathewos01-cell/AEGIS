@@ -19,3 +19,4 @@ export default function RiskScoreBar({ score, level }) {
     </div>
   )
 }
+

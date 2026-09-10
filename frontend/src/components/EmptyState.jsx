@@ -10,3 +10,4 @@ export default function EmptyState({ title = 'No data', message, action }) {
     </div>
   )
 }
+

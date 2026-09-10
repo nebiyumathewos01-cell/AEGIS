@@ -4,3 +4,4 @@ export default function Spinner({ size = 'md', className = '' }) {
     <div className={`${sz} border-2 border-cyber-border border-t-cyber-accent rounded-full animate-spin ${className}`} />
   )
 }
+

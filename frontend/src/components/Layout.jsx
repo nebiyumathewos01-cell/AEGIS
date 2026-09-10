@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Shield, Search, BookOpen,
-  AlertTriangle, Plus, LogOut,
+  AlertTriangle, Plus, LogOut, History,
   ChevronDown, Menu, X
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
@@ -11,13 +11,14 @@ import Logo from './Logo'
 const NAV = [
   { to: '/dashboard',           icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/alerts',              icon: AlertTriangle,   label: 'Alerts' },
+  { to: '/history',             icon: History,         label: 'History' },
   { to: '/investigations',      icon: BookOpen,        label: 'Investigations' },
   { to: '/threat-intelligence', icon: Search,          label: 'Threat Intel' },
   { to: '/audit',               icon: Shield,          label: 'Audit Log' },
 ]
 
 export default function Layout() {
-  const navigate       = useNavigate()
+  const navigate         = useNavigate()
   const { user, logout } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
@@ -36,10 +37,8 @@ export default function Layout() {
 
       {/* Mobile overlay */}
       {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-20 bg-black/60 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
+        <div className="fixed inset-0 z-20 bg-black/60 lg:hidden"
+          onClick={() => setSidebarOpen(false)} />
       )}
 
       {/* Sidebar */}
@@ -49,25 +48,22 @@ export default function Layout() {
         transform transition-transform duration-200
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
+
         {/* Logo */}
         <div className="flex items-center justify-between px-4 py-4 border-b border-cyber-border">
           <Logo size="sm" />
-          <button
-            className="lg:hidden text-cyber-muted hover:text-cyber-text"
-            onClick={() => setSidebarOpen(false)}
-          >
+          <button className="lg:hidden text-cyber-muted hover:text-cyber-text"
+            onClick={() => setSidebarOpen(false)}>
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* New alert */}
+        {/* New alert button */}
         <div className="px-3 pt-4 pb-2">
           <button
             onClick={() => { navigate('/alerts/new'); setSidebarOpen(false) }}
-            className="btn-primary w-full flex items-center justify-center gap-2 text-sm py-2"
-          >
-            <Plus className="w-4 h-4" />
-            New Alert
+            className="btn-primary w-full flex items-center justify-center gap-2 text-sm py-2">
+            <Plus className="w-4 h-4" /> New Alert
           </button>
         </div>
 
@@ -77,9 +73,7 @@ export default function Layout() {
             Navigation
           </p>
           {NAV.map(({ to, icon: Icon, label }) => (
-            <NavLink
-              key={to}
-              to={to}
+            <NavLink key={to} to={to}
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
                 `flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-all ${
@@ -87,8 +81,7 @@ export default function Layout() {
                     ? 'bg-cyber-accent/10 text-cyber-accent font-medium border border-cyber-accent/20'
                     : 'text-cyber-muted hover:text-cyber-text hover:bg-cyber-border/40'
                 }`
-              }
-            >
+              }>
               <Icon className="w-4 h-4 shrink-0" />
               {label}
             </NavLink>
@@ -100,30 +93,32 @@ export default function Layout() {
           <div className="relative">
             <button
               onClick={() => setProfileOpen(v => !v)}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-cyber-border/40 transition-colors"
-            >
-              <div className="w-7 h-7 rounded-full bg-cyber-accent/20 border border-cyber-accent/30 flex items-center justify-center shrink-0">
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md
+                         hover:bg-cyber-border/40 transition-colors">
+              <div className="w-7 h-7 rounded-full bg-cyber-accent/20 border border-cyber-accent/30
+                              flex items-center justify-center shrink-0">
                 <span className="text-xs font-bold text-cyber-accent">{initials}</span>
               </div>
               <div className="flex-1 text-left min-w-0">
                 <p className="text-xs font-medium text-cyber-text truncate">{user?.full_name}</p>
-                <p className="text-[10px] text-cyber-muted truncate capitalize">{user?.role}</p>
+                <p className="text-[10px] text-cyber-muted capitalize">{user?.role}</p>
               </div>
-              <ChevronDown className={`w-3.5 h-3.5 text-cyber-muted transition-transform ${profileOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`w-3.5 h-3.5 text-cyber-muted transition-transform
+                                       ${profileOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {profileOpen && (
-              <div className="absolute bottom-full left-0 right-0 mb-1 bg-cyber-bg border border-cyber-border rounded-lg shadow-xl overflow-hidden">
+              <div className="absolute bottom-full left-0 right-0 mb-1 bg-cyber-bg
+                              border border-cyber-border rounded-lg shadow-xl overflow-hidden">
                 <div className="px-3 py-2 border-b border-cyber-border">
                   <p className="text-xs text-cyber-muted">Signed in as</p>
                   <p className="text-xs font-mono text-cyber-text truncate">{user?.email}</p>
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-risk-high hover:bg-red-950/30 transition-colors"
-                >
-                  <LogOut className="w-4 h-4" />
-                  Sign Out
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm
+                             text-risk-high hover:bg-red-950/30 transition-colors">
+                  <LogOut className="w-4 h-4" /> Sign Out
                 </button>
               </div>
             )}
@@ -131,30 +126,25 @@ export default function Layout() {
         </div>
       </aside>
 
-      {/* Main content */}
+      {/* Main */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top bar */}
-        <header className="h-14 border-b border-cyber-border bg-cyber-surface flex items-center px-4 gap-3 shrink-0">
-          <button
-            className="lg:hidden text-cyber-muted hover:text-cyber-text"
-            onClick={() => setSidebarOpen(true)}
-          >
+        <header className="h-14 border-b border-cyber-border bg-cyber-surface
+                           flex items-center px-4 gap-3 shrink-0">
+          <button className="lg:hidden text-cyber-muted hover:text-cyber-text"
+            onClick={() => setSidebarOpen(true)}>
             <Menu className="w-5 h-5" />
           </button>
-
           <div className="flex-1" />
-
-          {/* Status indicator */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-cyber-bg rounded-md border border-cyber-border">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-cyber-bg
+                          rounded-md border border-cyber-border">
             <div className="w-1.5 h-1.5 rounded-full bg-risk-low animate-pulse" />
             <span className="text-xs text-cyber-muted font-mono">System Online</span>
           </div>
-
           <div className="w-px h-5 bg-cyber-border" />
-
-          {/* User avatar */}
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-cyber-accent/20 border border-cyber-accent/30 flex items-center justify-center">
+            <div className="w-7 h-7 rounded-full bg-cyber-accent/20 border border-cyber-accent/30
+                            flex items-center justify-center">
               <span className="text-xs font-bold text-cyber-accent">{initials}</span>
             </div>
             <span className="text-sm text-cyber-text hidden sm:block">{user?.full_name}</span>
@@ -169,3 +159,4 @@ export default function Layout() {
     </div>
   )
 }
+

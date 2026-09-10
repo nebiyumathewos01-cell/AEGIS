@@ -43,3 +43,4 @@ export default function Logo({ size = 'md', variant = 'full', className = '' }) 
     </div>
   )
 }
+

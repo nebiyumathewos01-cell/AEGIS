@@ -12,6 +12,7 @@ import ThreatIntelligence from './pages/ThreatIntelligence'
 import Investigations from './pages/Investigations'
 import Reports from './pages/Reports'
 import AuditLog from './pages/AuditLog'
+import History from './pages/History'
 
 export default function App() {
   return (
@@ -28,6 +29,7 @@ export default function App() {
             <Route path="alerts"              element={<Alerts />} />
             <Route path="alerts/new"          element={<NewAlert />} />
             <Route path="alerts/:id"          element={<AlertDetail />} />
+            <Route path="history"             element={<History />} />
             <Route path="investigations"      element={<Investigations />} />
             <Route path="threat-intelligence" element={<ThreatIntelligence />} />
             <Route path="reports/:id"         element={<Reports />} />
@@ -39,3 +41,4 @@ export default function App() {
     </AuthProvider>
   )
 }
+

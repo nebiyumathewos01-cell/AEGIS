@@ -28,6 +28,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('aegis_token')
     localStorage.removeItem('aegis_user')
     setUser(null)
+    window.location.href = '/'
   }
 
   return (
@@ -40,3 +41,4 @@ export function AuthProvider({ children }) {
 export function useAuth() {
   return useContext(AuthContext)
 }
+
