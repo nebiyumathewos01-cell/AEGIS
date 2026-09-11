@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.database import init_db
 import app.models  # noqa
-from app.api import alerts, auth, audit, admin, dashboard, demo, investigations, reports, threat_intelligence
+from app.api import alerts, auth, audit, admin, dashboard, demo, integrations, investigations, reports, threat_intelligence
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 settings = get_settings()
@@ -27,9 +27,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-for r in (auth.router, alerts.router, audit.router, admin.router, dashboard.router,
-          demo.router, investigations.router, reports.router,
-          threat_intelligence.router):
+for r in (auth.router, alerts.router, audit.router, admin.router,
+          dashboard.router, demo.router, integrations.router,
+          investigations.router, reports.router, threat_intelligence.router):
     app.include_router(r)
 
 
@@ -42,7 +42,7 @@ def on_startup():
         insp = sa_inspect(engine)
         existing = insp.get_table_names()
         needs_recreate = False
-        if "users" not in existing or "audit_logs" not in existing:
+        if "users" not in existing or "audit_logs" not in existing or "api_keys" not in existing:
             needs_recreate = True
         # Check for removed columns (approval_status removed in v2.1)
         if not needs_recreate and "users" in existing:

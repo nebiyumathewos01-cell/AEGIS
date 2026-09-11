@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Shield, Search, BookOpen,
-  AlertTriangle, Plus, LogOut, History, Crown,
+  AlertTriangle, Plus, LogOut, History, Crown, Settings,
   ChevronDown, Menu, X
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
@@ -15,6 +15,7 @@ const NAV = [
   { to: '/investigations',      icon: BookOpen,        label: 'Investigations' },
   { to: '/threat-intelligence', icon: Search,          label: 'Threat Intel' },
   { to: '/audit',               icon: Shield,          label: 'Audit Log' },
+  { to: '/settings',            icon: Settings,        label: 'Settings & API' },
 ]
 
 export default function Layout() {

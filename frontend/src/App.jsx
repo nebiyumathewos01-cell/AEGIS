@@ -5,7 +5,6 @@ import AdminRoute from './components/AdminRoute'
 import Layout from './components/Layout'
 import Login from './pages/Login'
 import Register from './pages/Register'
-import PendingApproval from './pages/PendingApproval'
 import Dashboard from './pages/Dashboard'
 import Alerts from './pages/Alerts'
 import AlertDetail from './pages/AlertDetail'
@@ -16,17 +15,15 @@ import Reports from './pages/Reports'
 import AuditLog from './pages/AuditLog'
 import History from './pages/History'
 import AdminPanel from './pages/AdminPanel'
+import SettingsPage from './pages/Settings'
 
 export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Public */}
           <Route path="/login"    element={<Login />} />
           <Route path="/register" element={<Register />} />
-
-          {/* Protected — approved users only */}
           <Route path="/" element={
             <ProtectedRoute><Layout /></ProtectedRoute>
           }>
@@ -40,13 +37,11 @@ export default function App() {
             <Route path="threat-intelligence" element={<ThreatIntelligence />} />
             <Route path="reports/:id"         element={<Reports />} />
             <Route path="audit"               element={<AuditLog />} />
-
-            {/* Admin only */}
+            <Route path="settings"            element={<SettingsPage />} />
             <Route path="admin" element={
               <AdminRoute><AdminPanel /></AdminRoute>
             } />
           </Route>
-
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </BrowserRouter>
