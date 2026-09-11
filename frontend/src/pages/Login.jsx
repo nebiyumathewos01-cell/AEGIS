@@ -1,26 +1,24 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import {
-  Shield, Mail, Lock, Eye, EyeOff,
-  AlertCircle, LogIn, Activity, Server, Search
-} from 'lucide-react'
-import Logo from '../components/Logo'
+import { Mail, Lock, Eye, EyeOff, AlertCircle, LogIn, Terminal, Shield, Zap, Activity } from 'lucide-react'
 import { login } from '../services/api'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 import Spinner from '../components/Spinner'
+import { Sun, Moon } from 'lucide-react'
 
-const PLATFORM_FEATURES = [
-  { icon: Activity, label: 'Real-time alert triage',     desc: 'Parse and score alerts instantly' },
-  { icon: Shield,   label: 'Rule-based risk scoring',    desc: 'Transparent 0–100 risk assessment' },
-  { icon: Search,   label: 'AI-powered explanation',     desc: 'Plain-English analysis of every threat' },
-  { icon: Server,   label: 'Full investigation workflow', desc: 'Notes, status tracking, PDF reports' },
+const FEATURES = [
+  { icon: Terminal, text: '20 log source parsers' },
+  { icon: Shield,   text: 'Rule-based risk scoring' },
+  { icon: Zap,      text: 'AI-powered explanation' },
+  { icon: Activity, text: 'Full SOC workflow' },
 ]
 
 export default function Login() {
   const navigate     = useNavigate()
   const { saveAuth } = useAuth()
+  const { dark, toggle } = useTheme()
 
-  // Never prefill — always start empty
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
   const [showPwd, setShowPwd]   = useState(false)
@@ -30,149 +28,136 @@ export default function Login() {
   async function handleSubmit(e) {
     e.preventDefault()
     if (!email.trim() || !password) return
-    setError('')
-    setLoading(true)
+    setError(''); setLoading(true)
     try {
       const res = await login({ email: email.trim().toLowerCase(), password })
       saveAuth(res.access_token, res.user)
       navigate('/dashboard', { replace: true })
     } catch (err) {
-      const detail = err?.response?.data?.detail ?? 'Invalid email or password.'
-      setError(detail)
+      setError(err?.response?.data?.detail ?? 'Invalid email or password.')
       setPassword('')
-    } finally {
-      setLoading(false)
-    }
+    } finally { setLoading(false) }
   }
 
   return (
-    <div className="min-h-screen bg-cyber-bg flex">
+    <div className="min-h-screen flex" style={{ background: 'var(--bg)' }}>
 
-      {/* ── Left panel ── */}
-      <div className="hidden lg:flex lg:w-[480px] xl:w-[540px] shrink-0 flex-col
-                      bg-cyber-surface border-r border-cyber-border p-10 xl:p-14">
-        {/* Brand */}
-        <div className="mb-12">
-          <Logo size="md" />
+      {/* Theme toggle top-right */}
+      <button onClick={toggle}
+        className="fixed top-4 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded text-xs z-50"
+        style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: dark ? '#f59e0b' : '#6366f1' }}>
+        {dark ? <><Sun className="w-3.5 h-3.5" /> Light</> : <><Moon className="w-3.5 h-3.5" /> Dark</>}
+      </button>
+
+      {/* Left panel */}
+      <div className="hidden lg:flex lg:w-[440px] shrink-0 flex-col p-10"
+        style={{ background: 'var(--surface)', borderRight: '2px solid var(--accent)' }}>
+
+        {/* Logo */}
+        <div className="flex items-center gap-3 mb-10">
+          <img src="/logo.svg" alt="AEGIS" className="w-12 h-12" />
+          <div>
+            <h1 className="text-2xl font-black tracking-widest" style={{ color: 'var(--accent)' }}>AEGIS</h1>
+            <p className="text-[10px] font-mono" style={{ color: 'var(--muted)' }}>
+              Alert Evaluation &amp; Guided Investigation System
+            </p>
+          </div>
         </div>
 
         {/* Headline */}
-        <div className="mb-10">
-          <h2 className="text-3xl font-bold text-cyber-text leading-tight mb-3">
-            Security Operations<br />Intelligence Platform
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--text)' }}>
+            Security Operations<br />
+            <span style={{ color: 'var(--accent)' }}>Intelligence Platform</span>
           </h2>
-          <p className="text-sm text-cyber-muted leading-relaxed">
-            Purpose-built for security analysts to triage alerts, understand threats,
-            and take decisive action — faster than manual investigation.
+          <p className="text-sm leading-relaxed" style={{ color: 'var(--muted)' }}>
+            Purpose-built for security analysts to parse, score, and investigate
+            alerts from 20+ log sources with AI-powered explanations.
           </p>
         </div>
 
         {/* Features */}
-        <div className="space-y-4 flex-1">
-          {PLATFORM_FEATURES.map(({ icon: Icon, label, desc }) => (
-            <div key={label} className="flex items-start gap-3.5">
-              <div className="p-2 bg-cyber-bg rounded-lg border border-cyber-border shrink-0 mt-0.5">
-                <Icon className="w-4 h-4 text-cyber-accent" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-cyber-text">{label}</p>
-                <p className="text-xs text-cyber-muted mt-0.5">{desc}</p>
-              </div>
+        <div className="space-y-3 flex-1">
+          {FEATURES.map(({ icon: Icon, text }) => (
+            <div key={text} className="flex items-center gap-3 px-3 py-2.5 rounded"
+              style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderLeft: '3px solid var(--teal)' }}>
+              <Icon className="w-4 h-4 shrink-0" style={{ color: 'var(--teal)' }} />
+              <span className="text-sm font-medium" style={{ color: 'var(--text)' }}>{text}</span>
             </div>
           ))}
         </div>
 
         {/* Footer */}
-        <div className="mt-10 pt-6 border-t border-cyber-border">
-          <p className="text-xs text-cyber-muted font-mono">
-            AEGIS v2.0 · Authorized Use Only · Defensive Security Tool
+        <div className="mt-8 pt-5" style={{ borderTop: '1px solid var(--border)' }}>
+          <p className="text-[10px] font-mono" style={{ color: 'var(--muted)' }}>
+            AEGIS v2.1 · Defensive Security Tool · Authorized Use Only
           </p>
         </div>
       </div>
 
-      {/* ── Right panel — login form ── */}
-      <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
-        <div className="w-full max-w-md">
+      {/* Right panel — form */}
+      <div className="flex-1 flex items-center justify-center p-6">
+        <div className="w-full max-w-sm">
 
-          {/* Mobile brand */}
-          <div className="mb-10 lg:hidden">
-            <Logo size="sm" />
+          {/* Mobile logo */}
+          <div className="flex items-center gap-2.5 mb-8 lg:hidden">
+            <img src="/logo.svg" alt="AEGIS" className="w-9 h-9" />
+            <div>
+              <p className="font-black tracking-widest text-lg" style={{ color: 'var(--accent)' }}>AEGIS</p>
+              <p className="text-[9px] font-mono" style={{ color: 'var(--muted)' }}>Security Platform</p>
+            </div>
           </div>
 
-          {/* Title */}
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-cyber-text">Sign in</h2>
-            <p className="text-sm text-cyber-muted mt-1.5">
+          {/* Form header */}
+          <div className="mb-6 pb-4" style={{ borderBottom: '1px solid var(--border)' }}>
+            <h2 className="text-xl font-bold" style={{ color: 'var(--text)' }}>Sign In</h2>
+            <p className="text-xs mt-1" style={{ color: 'var(--muted)' }}>
               Enter your credentials to access your workspace
             </p>
           </div>
 
           {/* Error */}
           {error && (
-            <div className="flex items-start gap-3 px-4 py-3 mb-6
-                            bg-red-950/30 border border-risk-high/40 rounded-lg">
-              <AlertCircle className="w-4 h-4 text-risk-high shrink-0 mt-0.5" />
-              <p className="text-sm text-risk-high leading-snug">{error}</p>
+            <div className="flex items-start gap-2.5 px-3 py-2.5 rounded mb-5"
+              style={{ background: 'rgba(255,34,68,0.08)', border: '1px solid rgba(255,34,68,0.3)', borderLeft: '3px solid #ff2244' }}>
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" style={{ color: '#ff2244' }} />
+              <p className="text-xs" style={{ color: '#ff2244' }}>{error}</p>
             </div>
           )}
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-5" autoComplete="off">
-            {/* Email */}
+          <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
             <div>
-              <label htmlFor="login-email" className="label">Email Address</label>
+              <label className="label">Email Address</label>
               <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-cyber-muted pointer-events-none" />
-                <input
-                  id="login-email"
-                  type="email"
-                  name="aegis-email"
-                  autoComplete="username"
-                  className="input pl-10"
-                  placeholder="your.email@company.com"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  required
-                  spellCheck={false}
-                />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none"
+                  style={{ color: 'var(--muted)' }} />
+                <input id="email" type="email" name="aegis-email" autoComplete="username"
+                  className="input pl-9" placeholder="analyst@company.com"
+                  value={email} onChange={e => setEmail(e.target.value)} required />
               </div>
             </div>
 
-            {/* Password */}
             <div>
-              <label htmlFor="login-password" className="label">Password</label>
+              <label className="label">Password</label>
               <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-cyber-muted pointer-events-none" />
-                <input
-                  id="login-password"
-                  type={showPwd ? 'text' : 'password'}
-                  name="aegis-password"
-                  autoComplete="current-password"
-                  className="input pl-10 pr-11"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  required
-                />
-                <button
-                  type="button"
-                  tabIndex={-1}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2
-                             text-cyber-muted hover:text-cyber-text transition-colors"
-                  onClick={() => setShowPwd(v => !v)}
-                  aria-label={showPwd ? 'Hide password' : 'Show password'}
-                >
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none"
+                  style={{ color: 'var(--muted)' }} />
+                <input id="password" type={showPwd ? 'text' : 'password'}
+                  name="aegis-password" autoComplete="current-password"
+                  className="input pl-9 pr-10" placeholder="Enter your password"
+                  value={password} onChange={e => setPassword(e.target.value)} required />
+                <button type="button" tabIndex={-1}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
+                  style={{ color: 'var(--muted)' }}
+                  onClick={() => setShowPwd(v => !v)}>
                   {showPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
 
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={loading || !email.trim() || !password}
-              className="btn-primary w-full flex items-center justify-center gap-2.5 py-3 mt-2 text-base"
-            >
+            <button type="submit" disabled={loading || !email.trim() || !password}
+              className="btn-primary w-full justify-center py-2.5 text-sm mt-2">
               {loading
                 ? <><Spinner size="sm" /> Authenticating...</>
                 : <><LogIn className="w-4 h-4" /> Sign In to AEGIS</>
@@ -180,15 +165,12 @@ export default function Login() {
             </button>
           </form>
 
-          {/* Register link */}
-          <div className="mt-8 pt-6 border-t border-cyber-border text-center">
-            <p className="text-sm text-cyber-muted">
-              No account yet?{' '}
-              <Link
-                to="/register"
-                className="text-cyber-accent hover:text-blue-300 font-semibold transition-colors"
-              >
-                Create your analyst account
+          <div className="mt-6 pt-5 text-center" style={{ borderTop: '1px solid var(--border)' }}>
+            <p className="text-xs" style={{ color: 'var(--muted)' }}>
+              No account?{' '}
+              <Link to="/register" className="font-semibold transition-colors"
+                style={{ color: 'var(--accent)' }}>
+                Create analyst account
               </Link>
             </p>
           </div>
@@ -197,4 +179,3 @@ export default function Login() {
     </div>
   )
 }
-
