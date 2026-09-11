@@ -37,15 +37,31 @@ for r in (auth.router, alerts.router, audit.router, admin.router, dashboard.rout
 def on_startup():
     log = logging.getLogger(__name__)
     try:
-        from sqlalchemy import inspect as sa_inspect
+        from sqlalchemy import inspect as sa_inspect, text
         from app.database import engine, Base
         insp = sa_inspect(engine)
-        existing = insp.get_table_names()
-        if "users" not in existing or "audit_logs" not in existing:
-            log.info("Schema outdated — recreating all tables")
+        existing_tables = insp.get_table_names()
+
+        needs_recreate = False
+
+        # Check tables exist
+        if "users" not in existing_tables or "audit_logs" not in existing_tables:
+            needs_recreate = True
+
+        # Check approval_status column exists in users table
+        if not needs_recreate and "users" in existing_tables:
+            cols = [c["name"] for c in insp.get_columns("users")]
+            if "approval_status" not in cols:
+                log.info("approval_status column missing — recreating schema")
+                needs_recreate = True
+
+        if needs_recreate:
+            log.info("Dropping and recreating all tables")
             Base.metadata.drop_all(bind=engine)
+
     except Exception as e:
-        log.warning("Schema check: %s", e)
+        log.warning("Schema check failed: %s", e)
+
     init_db()
     os.makedirs(settings.upload_dir, exist_ok=True)
     log.info("AEGIS v2.0 started")
