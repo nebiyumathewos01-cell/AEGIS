@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Shield, Search, BookOpen,
-  AlertTriangle, Plus, LogOut, History,
+  AlertTriangle, Plus, LogOut, History, Crown,
   ChevronDown, Menu, X
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
@@ -86,6 +86,27 @@ export default function Layout() {
               {label}
             </NavLink>
           ))}
+
+          {/* Admin only section */}
+          {user?.role === 'admin' && (
+            <>
+              <p className="px-3 pt-4 pb-1 text-[10px] font-semibold text-cyber-muted uppercase tracking-widest">
+                Administration
+              </p>
+              <NavLink to="/admin"
+                onClick={() => setSidebarOpen(false)}
+                className={({ isActive }) =>
+                  `flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-all ${
+                    isActive
+                      ? 'bg-cyber-accent/10 text-cyber-accent font-medium border border-cyber-accent/20'
+                      : 'text-cyber-muted hover:text-cyber-text hover:bg-cyber-border/40'
+                  }`
+                }>
+                <Crown className="w-4 h-4 shrink-0" />
+                Admin Panel
+              </NavLink>
+            </>
+          )}
         </nav>
 
         {/* User profile */}

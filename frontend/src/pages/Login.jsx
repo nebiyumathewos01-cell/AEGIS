@@ -37,8 +37,9 @@ export default function Login() {
       saveAuth(res.access_token, res.user)
       navigate('/dashboard', { replace: true })
     } catch (err) {
-      setError(err?.response?.data?.detail ?? 'Invalid email or password.')
-      setPassword('') // clear password on failure for security
+      const detail = err?.response?.data?.detail ?? 'Invalid email or password.'
+      setError(detail)
+      setPassword('')
     } finally {
       setLoading(false)
     }

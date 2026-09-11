@@ -10,11 +10,18 @@ from app.database import get_db
 from app.models.user import User
 from app.services.auth_service import (
     authenticate_user, create_access_token, create_user,
-    get_user_by_email, get_user_by_username,
+    get_user_by_email, get_user_by_username, get_approval_status,
 )
 from app.services.audit_service import log_action
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
+
+# ── Error codes for frontend ──────────────────────────────────────────────────
+STATUS_MESSAGES = {
+    "pending":   "Your account is pending administrator approval. Please check back later.",
+    "rejected":  "Your account access has been denied. Please contact the administrator.",
+    "suspended": "Your account has been suspended. Please contact the administrator.",
+}
 
 
 class RegisterRequest(BaseModel):
@@ -43,10 +50,12 @@ def _user_dict(user: User) -> dict:
         "username": user.username,
         "full_name": user.full_name,
         "role": user.role,
+        "approval_status": user.approval_status,
         "created_at": user.created_at.isoformat(),
     }
 
 
+# ── Register ──────────────────────────────────────────────────────────────────
 @router.post("/register", status_code=201)
 async def register(
     payload: RegisterRequest,
@@ -57,15 +66,24 @@ async def register(
         raise HTTPException(400, "Email already registered")
     if get_user_by_username(db, payload.username):
         raise HTTPException(400, "Username already taken")
-    user = create_user(db, email=payload.email, username=payload.username,
-                       full_name=payload.full_name, password=payload.password)
+
+    user = create_user(
+        db, email=payload.email, username=payload.username,
+        full_name=payload.full_name, password=payload.password,
+        role="analyst", approval_status="pending",
+    )
     await log_action(db, user=user, action="REGISTER",
-                     detail=f"New account registered: {user.email}",
+                     detail=f"New account registered (pending approval): {user.email}",
                      request=request)
-    token = create_access_token({"sub": str(user.id)})
-    return {"access_token": token, "token_type": "bearer", "user": _user_dict(user)}
+    # Return pending status — do NOT issue a token yet
+    return {
+        "message": "Registration successful. Your account is pending administrator approval.",
+        "approval_status": "pending",
+        "email": user.email,
+    }
 
 
+# ── Login (form) ──────────────────────────────────────────────────────────────
 @router.post("/login")
 async def login_form(
     request: Request,
@@ -74,10 +92,12 @@ async def login_form(
 ):
     user = authenticate_user(db, form.username, form.password)
     if not user:
+        status_val = get_approval_status(db, form.username)
+        msg = STATUS_MESSAGES.get(status_val, "Incorrect email or password")
         await log_action(db, action="LOGIN_FAILED",
-                         detail=f"Failed login attempt for: {form.username}",
+                         detail=f"Failed login: {form.username} — {status_val or 'bad credentials'}",
                          request=request)
-        raise HTTPException(status_code=401, detail="Incorrect email or password",
+        raise HTTPException(status_code=401, detail=msg,
                             headers={"WWW-Authenticate": "Bearer"})
     await log_action(db, user=user, action="LOGIN_SUCCESS",
                      detail=f"Successful login: {user.email}", request=request)
@@ -85,6 +105,7 @@ async def login_form(
     return {"access_token": token, "token_type": "bearer", "user": _user_dict(user)}
 
 
+# ── Login (JSON) ──────────────────────────────────────────────────────────────
 @router.post("/login/json")
 async def login_json(
     payload: LoginRequest,
@@ -93,16 +114,24 @@ async def login_json(
 ):
     user = authenticate_user(db, payload.email, payload.password)
     if not user:
+        # Check why — give meaningful error
+        status_val = get_approval_status(db, payload.email)
+        msg = STATUS_MESSAGES.get(status_val, "Incorrect email or password")
         await log_action(db, action="LOGIN_FAILED",
-                         detail=f"Failed login attempt for: {payload.email}",
+                         detail=f"Failed login: {payload.email} — {status_val or 'bad credentials'}",
                          request=request)
-        raise HTTPException(401, "Incorrect email or password")
+        raise HTTPException(
+            status_code=401,
+            detail=msg,
+            headers={"X-Approval-Status": status_val or "invalid"},
+        )
     await log_action(db, user=user, action="LOGIN_SUCCESS",
                      detail=f"Successful login: {user.email}", request=request)
     token = create_access_token({"sub": str(user.id)})
     return {"access_token": token, "token_type": "bearer", "user": _user_dict(user)}
 
 
+# ── Logout ────────────────────────────────────────────────────────────────────
 @router.post("/logout")
 async def logout(
     request: Request,
@@ -114,6 +143,7 @@ async def logout(
     return {"message": "Signed out successfully"}
 
 
+# ── Me ────────────────────────────────────────────────────────────────────────
 @router.get("/me")
 def get_me(current_user: User = Depends(get_current_user)):
     return _user_dict(current_user)

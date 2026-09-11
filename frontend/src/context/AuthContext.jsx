@@ -28,11 +28,18 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('aegis_token')
     localStorage.removeItem('aegis_user')
     setUser(null)
-    window.location.href = '/'
+    window.location.href = '/login'
   }
 
+  // True only if user exists AND is approved
+  const isAuthenticated = !!user && user.approval_status === 'approved'
+  const isPending       = !!user && user.approval_status === 'pending'
+
   return (
-    <AuthContext.Provider value={{ user, loading, saveAuth, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{
+      user, loading, saveAuth, logout,
+      isAuthenticated, isPending,
+    }}>
       {children}
     </AuthContext.Provider>
   )
@@ -41,4 +48,3 @@ export function AuthProvider({ children }) {
 export function useAuth() {
   return useContext(AuthContext)
 }
-

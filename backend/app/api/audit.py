@@ -21,6 +21,10 @@ ACTION_LABELS = {
     "REPORT_EXPORTED": "Report Exported",
     "DEMO_LOADED":     "Demo Loaded",
     "TI_LOOKUP":       "Threat Intel Lookup",
+    "USER_APPROVED":   "User Approved",
+    "USER_REJECTED":   "User Rejected",
+    "USER_SUSPENDED":  "User Suspended",
+    "USER_UNSUSPENDED":"User Unsuspended",
 }
 
 

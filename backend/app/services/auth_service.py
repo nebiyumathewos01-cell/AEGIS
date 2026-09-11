@@ -13,10 +13,7 @@ from app.models.user import User
 
 settings = get_settings()
 
-# Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-# JWT settings
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours
 
@@ -42,7 +39,7 @@ def decode_token(token: str) -> dict:
     return jwt.decode(token, settings.app_secret_key, algorithms=[ALGORITHM])
 
 
-# ── User CRUD ─────────────────────────────────────────────────────────────────
+# ── User CRUD ──────────────────────────────────────────────────────────────────
 
 def get_user_by_email(db: Session, email: str) -> User | None:
     return db.query(User).filter(User.email == email.lower()).first()
@@ -56,14 +53,23 @@ def get_user_by_id(db: Session, user_id: int) -> User | None:
     return db.query(User).filter(User.id == user_id).first()
 
 
-def create_user(db: Session, *, email: str, username: str,
-                full_name: str, password: str, role: str = "analyst") -> User:
+def admin_exists(db: Session) -> bool:
+    return db.query(User).filter(User.role == "admin").first() is not None
+
+
+def create_user(
+    db: Session, *, email: str, username: str,
+    full_name: str, password: str,
+    role: str = "analyst",
+    approval_status: str = "pending",
+) -> User:
     user = User(
         email=email.lower().strip(),
         username=username.lower().strip(),
         full_name=full_name.strip(),
         hashed_password=hash_password(password),
         role=role,
+        approval_status=approval_status,
     )
     db.add(user)
     db.flush()
@@ -72,11 +78,23 @@ def create_user(db: Session, *, email: str, username: str,
 
 
 def authenticate_user(db: Session, email: str, password: str) -> User | None:
+    """Returns user if credentials valid AND account is approved and active."""
     user = get_user_by_email(db, email)
     if not user:
         return None
     if not verify_password(password, user.hashed_password):
         return None
+    # Block pending/rejected/suspended
+    if user.approval_status != "approved":
+        return None
     if not user.is_active:
         return None
     return user
+
+
+def get_approval_status(db: Session, email: str) -> str | None:
+    """Return just the approval status for a given email (for login error messages)."""
+    user = get_user_by_email(db, email)
+    if not user:
+        return None
+    return user.approval_status

@@ -69,6 +69,16 @@ export const updateAlertStatus = (id, status) =>
 export const getDashboardStats = () =>
   api.get('/dashboard/stats').then(r => r.data)
 
+// ── Admin ─────────────────────────────────────────────────────────────────────
+export const adminSetup    = (data) => api.post('/admin/setup', data).then(r => r.data)
+export const getAdminStats = () => api.get('/admin/stats').then(r => r.data)
+export const getAdminUsers = (status) =>
+  api.get('/admin/users', { params: status ? { status } : {} }).then(r => r.data)
+export const approveUser   = (id) => api.put(`/admin/users/${id}/approve`).then(r => r.data)
+export const rejectUser    = (id) => api.put(`/admin/users/${id}/reject`).then(r => r.data)
+export const suspendUser   = (id) => api.put(`/admin/users/${id}/suspend`).then(r => r.data)
+export const unsuspendUser = (id) => api.put(`/admin/users/${id}/unsuspend`).then(r => r.data)
+
 // ── Audit ─────────────────────────────────────────────────────────────────────
 export const getAuditLogs = (params = {}) =>
   api.get('/audit/logs', { params }).then(r => r.data)

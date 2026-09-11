@@ -31,6 +31,9 @@ class Settings(BaseSettings):
     openai_base_url: str = "https://api.openai.com/v1"
     openai_model: str = "gpt-4o-mini"
 
+    # Admin setup (one-time)
+    admin_setup_key: str = "AEGIS_SETUP_2024"
+
     # Threat Intelligence (optional)
     virustotal_api_key: str = ""
 

@@ -1,9 +1,11 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
+import AdminRoute from './components/AdminRoute'
 import Layout from './components/Layout'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import PendingApproval from './pages/PendingApproval'
 import Dashboard from './pages/Dashboard'
 import Alerts from './pages/Alerts'
 import AlertDetail from './pages/AlertDetail'
@@ -13,14 +15,19 @@ import Investigations from './pages/Investigations'
 import Reports from './pages/Reports'
 import AuditLog from './pages/AuditLog'
 import History from './pages/History'
+import AdminPanel from './pages/AdminPanel'
 
 export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          {/* Public */}
           <Route path="/login"    element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/pending"  element={<PendingApproval />} />
+
+          {/* Protected — approved users only */}
           <Route path="/" element={
             <ProtectedRoute><Layout /></ProtectedRoute>
           }>
@@ -34,11 +41,16 @@ export default function App() {
             <Route path="threat-intelligence" element={<ThreatIntelligence />} />
             <Route path="reports/:id"         element={<Reports />} />
             <Route path="audit"               element={<AuditLog />} />
+
+            {/* Admin only */}
+            <Route path="admin" element={
+              <AdminRoute><AdminPanel /></AdminRoute>
+            } />
           </Route>
+
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
   )
 }
-
