@@ -18,8 +18,6 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 # ── Error codes for frontend ──────────────────────────────────────────────────
 STATUS_MESSAGES = {
-    "pending":   "Your account is pending administrator approval. Please check back later.",
-    "rejected":  "Your account access has been denied. Please contact the administrator.",
     "suspended": "Your account has been suspended. Please contact the administrator.",
 }
 
@@ -70,16 +68,20 @@ async def register(
     user = create_user(
         db, email=payload.email, username=payload.username,
         full_name=payload.full_name, password=payload.password,
-        role="analyst", approval_status="pending",
+        role="analyst", approval_status="approved",
     )
+    user.approved_at = datetime.now(timezone.utc)
+    db.flush()
+
     await log_action(db, user=user, action="REGISTER",
-                     detail=f"New account registered (pending approval): {user.email}",
+                     detail=f"New account registered: {user.email}",
                      request=request)
-    # Return pending status — do NOT issue a token yet
+    # Issue token immediately — no approval step
+    token = create_access_token({"sub": str(user.id)})
     return {
-        "message": "Registration successful. Your account is pending administrator approval.",
-        "approval_status": "pending",
-        "email": user.email,
+        "access_token": token,
+        "token_type": "bearer",
+        "user": _user_dict(user),
     }
 
 

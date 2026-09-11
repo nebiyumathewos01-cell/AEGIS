@@ -61,7 +61,7 @@ def create_user(
     db: Session, *, email: str, username: str,
     full_name: str, password: str,
     role: str = "analyst",
-    approval_status: str = "pending",
+    approval_status: str = "approved",  # auto-approved by default
 ) -> User:
     user = User(
         email=email.lower().strip(),
@@ -78,14 +78,14 @@ def create_user(
 
 
 def authenticate_user(db: Session, email: str, password: str) -> User | None:
-    """Returns user if credentials valid AND account is approved and active."""
+    """Returns user if credentials valid AND account is not suspended."""
     user = get_user_by_email(db, email)
     if not user:
         return None
     if not verify_password(password, user.hashed_password):
         return None
-    # Block pending/rejected/suspended
-    if user.approval_status != "approved":
+    # Only block suspended users
+    if user.approval_status == "suspended":
         return None
     if not user.is_active:
         return None

@@ -98,30 +98,8 @@ function UserRow({ user, onAction, loading }) {
 
         {/* Actions */}
         <td className="py-3.5 px-4">
-          {user.role !== 'admin' && (
+        {user.role !== 'admin' && (
             <div className="flex items-center gap-1.5">
-              {user.approval_status === 'pending' && (
-                <>
-                  <button
-                    onClick={() => onAction('approve', user.id)}
-                    disabled={loading}
-                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium
-                               bg-green-950/40 text-risk-low border border-green-800/40
-                               hover:bg-green-950/60 transition-colors disabled:opacity-40"
-                  >
-                    <CheckCircle className="w-3.5 h-3.5" /> Approve
-                  </button>
-                  <button
-                    onClick={() => onAction('reject', user.id)}
-                    disabled={loading}
-                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium
-                               bg-red-950/40 text-risk-high border border-red-800/40
-                               hover:bg-red-950/60 transition-colors disabled:opacity-40"
-                  >
-                    <XCircle className="w-3.5 h-3.5" /> Reject
-                  </button>
-                </>
-              )}
               {user.approval_status === 'approved' && (
                 <button
                   onClick={() => onAction('suspend', user.id)}
@@ -133,7 +111,7 @@ function UserRow({ user, onAction, loading }) {
                   <UserX className="w-3.5 h-3.5" /> Suspend
                 </button>
               )}
-              {(user.approval_status === 'suspended' || user.approval_status === 'rejected') && (
+              {user.approval_status === 'suspended' && (
                 <button
                   onClick={() => onAction('unsuspend', user.id)}
                   disabled={loading}

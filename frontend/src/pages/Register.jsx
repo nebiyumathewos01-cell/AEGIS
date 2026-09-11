@@ -42,8 +42,9 @@ export default function Register() {
     setLoading(true)
     try {
       const res = await register(form)
-      // User is pending approval — do NOT issue token, redirect to pending page
-      navigate('/pending', { replace: true })
+      // User is approved immediately — issue token and go to dashboard
+      saveAuth(res.access_token, res.user)
+      navigate('/dashboard', { replace: true })
     } catch (err) {
       setError(err?.response?.data?.detail ?? 'Registration failed. Please try again.')
     } finally {

@@ -31,9 +31,9 @@ export function AuthProvider({ children }) {
     window.location.href = '/login'
   }
 
-  // True only if user exists AND is approved
-  const isAuthenticated = !!user && user.approval_status === 'approved'
-  const isPending       = !!user && user.approval_status === 'pending'
+  // Authenticated = user exists and not suspended
+  const isAuthenticated = !!user && user.approval_status !== 'suspended'
+  const isPending       = false  // no longer used
 
   return (
     <AuthContext.Provider value={{

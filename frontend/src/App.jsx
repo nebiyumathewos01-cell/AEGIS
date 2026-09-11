@@ -25,7 +25,6 @@ export default function App() {
           {/* Public */}
           <Route path="/login"    element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/pending"  element={<PendingApproval />} />
 
           {/* Protected — approved users only */}
           <Route path="/" element={
