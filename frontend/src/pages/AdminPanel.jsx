@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import {
-  Shield, Users, Clock, CheckCircle, XCircle,
-  UserX, UserCheck, RefreshCw, AlertTriangle,
-  Crown, ChevronDown, ChevronUp
+  Shield, Users, CheckCircle,
+  UserX, UserCheck, RefreshCw,
+  Crown
 } from 'lucide-react'
 import {
   getAdminStats, getAdminUsers,
@@ -14,15 +14,14 @@ import { fmtDate, fmtRelative } from '../utils/format'
 
 // ── Status badge ──────────────────────────────────────────────────────────────
 const STATUS_STYLES = {
-  pending:   'bg-yellow-950/40 text-yellow-400 border-yellow-800/40',
-  approved:  'bg-green-950/40 text-risk-low border-green-800/40',
-  rejected:  'bg-red-950/40 text-risk-high border-red-800/40',
+  active:    'bg-green-950/40 text-risk-low border-green-800/40',
   suspended: 'bg-gray-800/50 text-gray-400 border-gray-700/40',
 }
 
-function StatusPill({ status }) {
+function StatusPill({ is_active }) {
+  const status = is_active ? 'active' : 'suspended'
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold border capitalize ${STATUS_STYLES[status] ?? ''}`}>
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold border capitalize ${STATUS_STYLES[status]}`}>
       {status}
     </span>
   )
@@ -84,7 +83,7 @@ function UserRow({ user, onAction, loading }) {
         </td>
 
         {/* Status */}
-        <td className="py-3.5 px-4"><StatusPill status={user.approval_status} /></td>
+        <td className="py-3.5 px-4"><StatusPill is_active={user.is_active} /></td>
 
         {/* Alerts count */}
         <td className="py-3.5 px-4">
@@ -147,7 +146,11 @@ export default function AdminPanel() {
         getAdminUsers(filter || undefined),
       ])
       setStats(s)
-      setUsers(u.users)
+      // filter locally by is_active
+      let filtered = u.users
+      if (filter === 'active')    filtered = u.users.filter(u => u.is_active)
+      if (filter === 'suspended') filtered = u.users.filter(u => !u.is_active)
+      setUsers(filtered)
     } finally {
       setLoading(false)
     }
@@ -185,23 +188,6 @@ export default function AdminPanel() {
         }
       />
 
-      {/* Alert for pending users */}
-      {pendingCount > 0 && (
-        <div className="flex items-center gap-3 px-4 py-3 bg-yellow-950/30
-                        border border-yellow-800/40 rounded-lg">
-          <Clock className="w-5 h-5 text-risk-medium shrink-0" />
-          <p className="text-sm text-risk-medium font-medium">
-            {pendingCount} user{pendingCount !== 1 ? 's' : ''} waiting for approval
-          </p>
-          <button
-            className="ml-auto text-xs text-risk-medium underline"
-            onClick={() => setFilter('pending')}
-          >
-            View pending
-          </button>
-        </div>
-      )}
-
       {/* Success/error message */}
       {msg && (
         <div className="px-4 py-2.5 bg-green-950/30 border border-green-800/40 rounded-lg text-sm text-risk-low">
@@ -211,12 +197,11 @@ export default function AdminPanel() {
 
       {/* Stats */}
       {stats && (
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard icon={Users}       label="Total Users"    value={stats.total_users}     color="text-cyber-accent" />
-          <StatCard icon={Clock}       label="Pending"        value={stats.pending_users}    color="text-risk-medium" />
-          <StatCard icon={CheckCircle} label="Approved"       value={stats.approved_users}   color="text-risk-low" />
-          <StatCard icon={XCircle}     label="Rejected"       value={stats.rejected_users}   color="text-risk-high" />
-          <StatCard icon={Shield}      label="Total Alerts"   value={stats.total_alerts}     color="text-cyber-accent" />
+          <StatCard icon={CheckCircle} label="Active"         value={stats.active_users}    color="text-risk-low" />
+          <StatCard icon={UserX}       label="Suspended"      value={stats.suspended_users} color="text-risk-high" />
+          <StatCard icon={Shield}      label="Total Alerts"   value={stats.total_alerts}    color="text-cyber-accent" />
         </div>
       )}
 
@@ -224,9 +209,7 @@ export default function AdminPanel() {
       <div className="card py-3 flex items-center gap-2 flex-wrap">
         {[
           { value: '',          label: 'All Users' },
-          { value: 'pending',   label: 'Pending' },
-          { value: 'approved',  label: 'Approved' },
-          { value: 'rejected',  label: 'Rejected' },
+          { value: 'active',    label: 'Active' },
           { value: 'suspended', label: 'Suspended' },
         ].map(({ value, label }) => (
           <button

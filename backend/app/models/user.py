@@ -14,17 +14,10 @@ class User(Base):
     full_name: Mapped[str] = mapped_column(String(128), nullable=False)
     hashed_password: Mapped[str] = mapped_column(String(256), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-
-    # approval_status: pending | approved | rejected | suspended
-    approval_status: Mapped[str] = mapped_column(String(32), default="pending", nullable=False)
-
-    # role: analyst | admin
     role: Mapped[str] = mapped_column(String(32), default="analyst")
-
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=lambda: datetime.now(timezone.utc)
     )
-    approved_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     alerts: Mapped[list] = relationship(
         "Alert", back_populates="owner", cascade="all, delete-orphan"

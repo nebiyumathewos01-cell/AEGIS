@@ -32,8 +32,8 @@ export function AuthProvider({ children }) {
   }
 
   // Authenticated = user exists and not suspended
-  const isAuthenticated = !!user && user.approval_status !== 'suspended'
-  const isPending       = false  // no longer used
+  const isAuthenticated = !!user && user.is_active !== false
+  const isPending       = false
 
   return (
     <AuthContext.Provider value={{
