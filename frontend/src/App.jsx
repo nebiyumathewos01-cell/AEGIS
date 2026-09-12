@@ -17,6 +17,7 @@ import AuditLog from './pages/AuditLog'
 import History from './pages/History'
 import AdminPanel from './pages/AdminPanel'
 import SettingsPage from './pages/Settings'
+import EnvironmentProfile from './pages/EnvironmentProfile'
 
 export default function App() {
   return (
@@ -40,6 +41,7 @@ export default function App() {
             <Route path="reports/:id"         element={<Reports />} />
             <Route path="audit"               element={<AuditLog />} />
             <Route path="settings"            element={<SettingsPage />} />
+            <Route path="environment"          element={<EnvironmentProfile />} />
             <Route path="admin" element={
               <AdminRoute><AdminPanel /></AdminRoute>
             } />

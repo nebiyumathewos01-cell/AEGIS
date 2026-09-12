@@ -37,6 +37,27 @@ export const login = (data) =>
 export const getMe = () =>
   api.get('/auth/me').then(r => r.data)
 
+// ── Environment Profile ───────────────────────────────────────────────────────
+export const getEnvironmentProfile = () =>
+  api.get('/environment').then(r => r.data)
+
+export const saveEnvironmentProfile = (data) =>
+  api.put('/environment', data).then(r => r.data)
+
+// ── Playbook ──────────────────────────────────────────────────────────────────
+export const generatePlaybook  = (alertId) =>
+  api.post(`/playbook/${alertId}/generate`).then(r => r.data)
+
+export const getPlaybook       = (alertId) =>
+  api.get(`/playbook/${alertId}`).then(r => r.data)
+
+export const updatePlaybookStep = (alertId, stepNumber, status) =>
+  api.put(`/playbook/${alertId}/steps`, { step_number: stepNumber, status }).then(r => r.data)
+
+// ── Analysis with language ────────────────────────────────────────────────────
+export const analyzeAlertLang = (id, language = 'en') =>
+  api.post(`/alerts/${id}/analyze?language=${language}`).then(r => r.data)
+
 // ── Sources ───────────────────────────────────────────────────────────────────
 export const getAlertSources = () =>
   api.get('/alerts/sources').then(r => r.data)

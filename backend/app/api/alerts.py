@@ -137,15 +137,26 @@ def get_alert_detail(
 @router.post("/{alert_id}/analyze")
 async def analyze_alert(
     alert_id: int,
+    language: str = "en",
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     alert = get_alert(db, alert_id, owner_id=current_user.id)
     if not alert:
         raise HTTPException(404, "Alert not found")
+
+    # Get environment profile for context
+    from app.models.environment_profile import EnvironmentProfile
+    profile_obj = db.query(EnvironmentProfile).filter(
+        EnvironmentProfile.owner_id == current_user.id
+    ).first()
+    env_context = profile_obj.to_context_string() if profile_obj else ""
+
     parsed = parse_alert(alert.raw_alert, source_hint=alert.source)
     rule_result = _rule_engine.analyze(parsed)
-    ai_result = await _ai_analyzer.analyze(parsed, rule_result)
+    ai_result = await _ai_analyzer.analyze(parsed, rule_result,
+                                            language=language,
+                                            env_context=env_context)
     analysis = save_analysis(
         db, alert_id=alert_id, owner_id=current_user.id,
         summary=ai_result.summary,
@@ -164,6 +175,7 @@ async def analyze_alert(
         "evidence": analysis.evidence, "risk_explanation": analysis.risk_explanation,
         "recommendations": recs, "ai_model": analysis.ai_model,
         "is_ai_generated": analysis.is_ai_generated,
+        "language": ai_result.language,
         "created_at": analysis.created_at.isoformat(),
     }
 

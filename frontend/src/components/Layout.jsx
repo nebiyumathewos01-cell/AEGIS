@@ -4,19 +4,20 @@ import {
   LayoutDashboard, Shield, Search, BookOpen,
   AlertTriangle, Plus, LogOut, History, Crown,
   Settings, ChevronDown, Menu, X, Sun, Moon,
-  Radio, Zap
+  Radio, Zap, Server
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 
 const NAV = [
-  { to: '/dashboard',           icon: LayoutDashboard, label: 'Dashboard',     group: 'main' },
-  { to: '/alerts',              icon: AlertTriangle,   label: 'Alerts',        group: 'main' },
-  { to: '/history',             icon: History,         label: 'History',       group: 'main' },
-  { to: '/investigations',      icon: BookOpen,        label: 'Investigations',group: 'main' },
-  { to: '/threat-intelligence', icon: Search,          label: 'Threat Intel',  group: 'tools' },
-  { to: '/audit',               icon: Shield,          label: 'Audit Log',     group: 'tools' },
-  { to: '/settings',            icon: Settings,        label: 'Settings & API',group: 'tools' },
+  { to: '/dashboard',           icon: LayoutDashboard, label: 'Dashboard',      group: 'main' },
+  { to: '/alerts',              icon: AlertTriangle,   label: 'Alerts',         group: 'main' },
+  { to: '/history',             icon: History,         label: 'History',        group: 'main' },
+  { to: '/investigations',      icon: BookOpen,        label: 'Investigations', group: 'main' },
+  { to: '/threat-intelligence', icon: Search,          label: 'Threat Intel',   group: 'tools' },
+  { to: '/environment',         icon: Server,          label: 'Env Profile',    group: 'tools' },
+  { to: '/audit',               icon: Shield,          label: 'Audit Log',      group: 'tools' },
+  { to: '/settings',            icon: Settings,        label: 'Settings & API', group: 'tools' },
 ]
 
 export default function Layout() {
