@@ -17,6 +17,9 @@ COPY backend/app/ ./app/
 
 RUN mkdir -p /tmp/uploads
 
+# Set PostgreSQL URL directly in the image as fallback
+ENV DATABASE_URL=postgresql://aegis_aegis:i2N8m89W9Z4GP90AFiCe0CD4jLpkKGdV@dpg-daiinb0ae00c73emape0-a/aegis_db
+
 EXPOSE 8000
 
 CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
