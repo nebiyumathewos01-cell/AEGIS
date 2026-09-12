@@ -11,9 +11,9 @@ import PageHeader from '../components/PageHeader'
 import { fmtDate, fmtRelative } from '../utils/format'
 
 // ── API calls ─────────────────────────────────────────────────────────────────
-const getKeys    = ()          => api.get('/api/keys').then(r => r.data)
-const createKey  = (label)     => api.post('/api/keys', { label }).then(r => r.data)
-const revokeKey  = (id)        => api.delete(`/api/keys/${id}`).then(r => r.data)
+const getKeys    = ()      => api.get('/keys').then(r => r.data)
+const createKey  = (label) => api.post('/keys', { label }).then(r => r.data)
+const revokeKey  = (id)    => api.delete(`/keys/${id}`).then(r => r.data)
 
 const BACKEND_URL = import.meta.env.VITE_API_URL || 'https://aegis-1-15r0.onrender.com'
 
