@@ -27,6 +27,7 @@ export function AuthProvider({ children }) {
   function logout() {
     localStorage.removeItem('aegis_token')
     localStorage.removeItem('aegis_user')
+    sessionStorage.clear()
     setUser(null)
     window.location.href = '/login'
   }
