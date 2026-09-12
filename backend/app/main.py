@@ -40,34 +40,11 @@ for r in (auth.router, alerts.router, audit.router, admin.router,
 @app.on_event("startup")
 def on_startup():
     log = logging.getLogger(__name__)
-    try:
-        from sqlalchemy import inspect as sa_inspect, text
-        from app.database import engine, Base
-
-        insp = sa_inspect(engine)
-        existing = insp.get_table_names()
-
-        # Only add missing tables — NEVER drop existing ones
-        # This preserves all user data across restarts
-        required = {"users", "alerts", "analyses", "investigation_notes",
-                    "audit_logs", "api_keys", "environment_profiles", "playbooks"}
-        missing = required - set(existing)
-
-        if missing:
-            log.info("Creating missing tables: %s", missing)
-            # Create only the missing tables
-            from app.database import Base
-            Base.metadata.create_all(bind=engine)
-            log.info("Missing tables created")
-        else:
-            log.info("All tables present — no schema changes needed")
-
-    except Exception as e:
-        log.warning("Schema check error: %s — running init_db()", e)
-        init_db()
-
+    # ONLY create missing tables — NEVER drop anything
+    # This guarantees user accounts and data survive all restarts
+    init_db()
     os.makedirs(settings.upload_dir, exist_ok=True)
-    log.info("AEGIS v2.1 started — database ready")
+    log.info("AEGIS v2.1 started")
 
 
 @app.get("/api/health")
