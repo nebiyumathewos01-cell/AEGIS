@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, Cpu, FileText, Shield, AlertTriangle,
-  CheckCircle, BookOpen, Send, Download, RefreshCw
+  CheckCircle, BookOpen, Send, Download
 } from 'lucide-react'
 import { useAlert } from '../hooks/useAlert'
 import RiskBadge from '../components/RiskBadge'
@@ -10,8 +10,7 @@ import RiskScoreBar from '../components/RiskScoreBar'
 import StatusBadge from '../components/StatusBadge'
 import Spinner from '../components/Spinner'
 import PlaybookPanel from '../components/PlaybookPanel'
-import LanguageSelector from '../components/LanguageSelector'
-import { analyzeAlertLang, updateAlertStatus, addNote } from '../services/api'
+import { analyzeAlert, updateAlertStatus, addNote } from '../services/api'
 import { fmtDate } from '../utils/format'
 import { formatAlertType, riskColor } from '../utils/risk'
 
@@ -21,16 +20,13 @@ const STATUS_LABELS = {
   false_positive: 'False Positive', resolved: 'Resolved',
 }
 
-function Section({ icon: Icon, title, children, right }) {
+function Section({ icon: Icon, title, children }) {
   return (
     <div className="panel">
-      <div className="flex items-center justify-between mb-4 pb-3"
+      <div className="flex items-center gap-2 mb-4 pb-3"
         style={{ borderBottom: '1px solid var(--border)' }}>
-        <div className="flex items-center gap-2">
-          <Icon className="w-4 h-4" style={{ color: 'var(--accent)' }} />
-          <span className="font-semibold text-sm" style={{ color: 'var(--text)' }}>{title}</span>
-        </div>
-        {right && <div>{right}</div>}
+        <Icon className="w-4 h-4" style={{ color: 'var(--accent)' }} />
+        <span className="font-semibold text-sm" style={{ color: 'var(--text)' }}>{title}</span>
       </div>
       {children}
     </div>
@@ -41,7 +37,7 @@ function EvidenceRow({ label, value }) {
   if (!value && value !== 0) return null
   return (
     <div className="flex items-start gap-3 py-1.5"
-      style={{ borderBottom: '1px solid var(--border)', opacity: 1 }}>
+      style={{ borderBottom: '1px solid var(--border)' }}>
       <span className="text-xs w-40 shrink-0" style={{ color: 'var(--muted)' }}>{label}</span>
       <span className="text-xs font-mono break-all" style={{ color: 'var(--text)' }}>{String(value)}</span>
     </div>
@@ -49,30 +45,19 @@ function EvidenceRow({ label, value }) {
 }
 
 export default function AlertDetail() {
-  const { id }     = useParams()
-  const navigate   = useNavigate()
+  const { id }   = useParams()
+  const navigate = useNavigate()
   const { alert, loading, error, refresh } = useAlert(id)
 
-  const [analyzing, setAnalyzing]       = useState(false)
-  const [language, setLanguage]         = useState('en')
-  const [noteText, setNoteText]         = useState('')
+  const [analyzing, setAnalyzing]           = useState(false)
+  const [noteText, setNoteText]             = useState('')
   const [submittingNote, setSubmittingNote] = useState(false)
   const [statusChanging, setStatusChanging] = useState(false)
-
-  if (loading) return <div className="flex items-center justify-center h-full"><Spinner size="lg" /></div>
-  if (error)   return <div className="p-6" style={{ color: '#ff2244' }}>{error}</div>
-  if (!alert)  return null
-
-  const pd = alert.parsed_data ?? {}
-  const riskFactors = alert.risk_factors ?? []
-  const analysis = alert.analysis
-
-  const timelineLines = alert.raw_alert.split('\n').filter(l => l.trim()).slice(0, 20)
 
   async function handleAnalyze() {
     setAnalyzing(true)
     try {
-      await analyzeAlertLang(id, language)
+      await analyzeAlert(id)
       await refresh()
     } finally {
       setAnalyzing(false)
@@ -102,8 +87,18 @@ export default function AlertDetail() {
     }
   }
 
+  if (loading) return <div className="flex items-center justify-center h-full"><Spinner size="lg" /></div>
+  if (error)   return <div className="p-6" style={{ color: '#ff2244' }}>{error}</div>
+  if (!alert)  return null
+
+  const pd          = alert.parsed_data ?? {}
+  const riskFactors = alert.risk_factors ?? []
+  const analysis    = alert.analysis
+  const timelineLines = alert.raw_alert.split('\n').filter(l => l.trim()).slice(0, 20)
+
   return (
     <div className="p-5 max-w-5xl">
+
       {/* Header */}
       <div className="flex items-start gap-3 mb-5 pb-4"
         style={{ borderBottom: '1px solid var(--border)' }}>
@@ -119,7 +114,8 @@ export default function AlertDetail() {
             <StatusBadge status={alert.status} />
           </div>
           <p className="text-xs font-mono" style={{ color: 'var(--muted)' }}>
-            Alert #{alert.id} · {fmtDate(alert.created_at)} · Source: <span className="uppercase">{alert.source}</span>
+            Alert #{alert.id} · {fmtDate(alert.created_at)} · Source:{' '}
+            <span className="uppercase">{alert.source}</span>
           </p>
         </div>
         <div className="flex gap-2 flex-wrap">
@@ -136,14 +132,15 @@ export default function AlertDetail() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Left column */}
+
+        {/* ── Left column ── */}
         <div className="lg:col-span-2 space-y-4">
 
           {/* Alert Info */}
           <Section icon={FileText} title="Alert Information">
             <div className="grid grid-cols-2 gap-x-4">
               <EvidenceRow label="Alert Type"     value={formatAlertType(alert.alert_type)} />
-              <EvidenceRow label="Source"         value={alert.source?.toUpperCase()} />
+              <EvidenceRow label="Source"         value={alert.source && alert.source.toUpperCase()} />
               <EvidenceRow label="Source IP"      value={alert.source_ip} />
               <EvidenceRow label="Destination IP" value={alert.destination_ip} />
               <EvidenceRow label="Protocol"       value={alert.protocol} />
@@ -162,7 +159,7 @@ export default function AlertDetail() {
                 .map(([k, v]) => (
                   <EvidenceRow key={k} label={k.replace(/_/g, ' ')} value={v} />
                 ))}
-              {pd.open_ports?.length > 0 && (
+              {pd.open_ports && pd.open_ports.length > 0 && (
                 <div className="pt-2">
                   <p className="text-xs mb-1.5" style={{ color: 'var(--muted)' }}>Open Ports</p>
                   <div className="flex flex-wrap gap-1.5">
@@ -173,7 +170,7 @@ export default function AlertDetail() {
                           color: p.sensitive ? '#ff2244' : 'var(--muted)',
                           background: p.sensitive ? 'rgba(255,34,68,0.08)' : 'var(--surface2)',
                         }}>
-                        {p.port}/{p.protocol} {p.sensitive ? `(${p.service_name})` : ''}
+                        {p.port}/{p.protocol}{p.sensitive ? ` (${p.service_name})` : ''}
                       </span>
                     ))}
                   </div>
@@ -182,13 +179,11 @@ export default function AlertDetail() {
             </Section>
           )}
 
-          {/* Language selector — always visible */}
+          {/* AI Analysis */}
           <Section icon={Cpu}
-            title={`AI Analysis${analysis ? ` · ${analysis.is_ai_generated ? analysis.ai_model : 'Rule-Based'}` : ''}`}
-            right={
-              <LanguageSelector value={language} onChange={setLanguage} />
-            }
-          >
+            title={`AI Analysis${analysis
+              ? ` · ${analysis.is_ai_generated ? analysis.ai_model : 'Rule-Based'}`
+              : ''}`}>
             {analysis ? (
               <div className="space-y-4">
                 <div>
@@ -197,7 +192,9 @@ export default function AlertDetail() {
                 </div>
                 <div>
                   <p className="text-xs mb-1" style={{ color: 'var(--muted)' }}>Threat Interpretation</p>
-                  <p className="text-sm leading-relaxed" style={{ color: 'var(--text)' }}>{analysis.threat_interpretation}</p>
+                  <p className="text-sm leading-relaxed" style={{ color: 'var(--text)' }}>
+                    {analysis.threat_interpretation}
+                  </p>
                 </div>
                 <div>
                   <p className="text-xs mb-1" style={{ color: 'var(--muted)' }}>Confirmed Evidence</p>
@@ -210,9 +207,11 @@ export default function AlertDetail() {
                   <p className="text-xs mb-1" style={{ color: 'var(--muted)' }}>Risk Explanation</p>
                   <p className="text-sm" style={{ color: 'var(--text)' }}>{analysis.risk_explanation}</p>
                 </div>
-                {analysis.recommendations?.length > 0 && (
+                {analysis.recommendations && analysis.recommendations.length > 0 && (
                   <div>
-                    <p className="text-xs mb-2" style={{ color: 'var(--muted)' }}>Recommended Investigation Steps</p>
+                    <p className="text-xs mb-2" style={{ color: 'var(--muted)' }}>
+                      Recommended Investigation Steps
+                    </p>
                     <ol className="space-y-1.5">
                       {analysis.recommendations.map((r, i) => (
                         <li key={i} className="flex gap-2.5 text-sm">
@@ -224,19 +223,13 @@ export default function AlertDetail() {
                     </ol>
                   </div>
                 )}
-                <div className="pt-2">
-                  <button onClick={handleAnalyze} disabled={analyzing}
-                    className="btn-secondary text-xs flex items-center gap-2">
-                    {analyzing ? <Spinner size="sm" /> : <RefreshCw className="w-3.5 h-3.5" />}
-                    Re-analyze in {language === 'en' ? 'English' : language === 'am' ? 'አማርኛ' : 'Afaan Oromoo'}
-                  </button>
-                </div>
               </div>
             ) : (
               <div className="text-center py-8">
                 <Cpu className="w-7 h-7 mx-auto mb-2" style={{ color: 'var(--muted)' }} />
                 <p className="text-sm mb-1" style={{ color: 'var(--muted)' }}>No analysis yet.</p>
-                <button className="btn-primary text-xs mt-2" onClick={handleAnalyze} disabled={analyzing}>
+                <button className="btn-primary text-xs mt-2"
+                  onClick={handleAnalyze} disabled={analyzing}>
                   {analyzing ? 'Analyzing…' : 'Run AI Analysis'}
                 </button>
               </div>
@@ -272,15 +265,18 @@ export default function AlertDetail() {
                   )
                 })}
                 {alert.raw_alert.split('\n').filter(l => l.trim()).length > 20 && (
-                  <p className="text-xs pt-1" style={{ color: 'var(--muted)' }}>… more events in raw log.</p>
+                  <p className="text-xs pt-1" style={{ color: 'var(--muted)' }}>
+                    More events in raw log above.
+                  </p>
                 )}
               </div>
             </Section>
           )}
         </div>
 
-        {/* Right column */}
+        {/* ── Right column ── */}
         <div className="space-y-4">
+
           {/* Risk Score */}
           <Section icon={AlertTriangle} title="Risk Score">
             <RiskScoreBar score={alert.risk_score} level={alert.risk_level} />
@@ -289,7 +285,9 @@ export default function AlertDetail() {
                 <div key={i} className="flex items-start justify-between gap-2 text-xs">
                   <span style={{ color: 'var(--text)' }}>{f.description}</span>
                   <span className="font-mono font-bold shrink-0"
-                    style={{ color: riskColor(alert.risk_level) }}>+{f.score_delta}</span>
+                    style={{ color: riskColor(alert.risk_level) }}>
+                    +{f.score_delta}
+                  </span>
                 </div>
               ))}
             </div>
@@ -307,10 +305,7 @@ export default function AlertDetail() {
                     color: 'var(--accent)',
                     border: '1px solid rgba(255,107,53,0.3)',
                     fontWeight: 600,
-                  } : {
-                    color: 'var(--muted)',
-                    border: '1px solid transparent',
-                  }}>
+                  } : { color: 'var(--muted)', border: '1px solid transparent' }}>
                   {STATUS_LABELS[s]}
                 </button>
               ))}
@@ -323,19 +318,27 @@ export default function AlertDetail() {
               {(!alert.notes || alert.notes.length === 0) && (
                 <p className="text-xs" style={{ color: 'var(--muted)' }}>No notes yet.</p>
               )}
-              {alert.notes?.map(n => (
+              {alert.notes && alert.notes.map(n => (
                 <div key={n.id} className="text-xs rounded p-2.5"
-                  style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderLeft: '2px solid var(--accent)' }}>
+                  style={{
+                    background: 'var(--bg)',
+                    border: '1px solid var(--border)',
+                    borderLeft: '2px solid var(--accent)',
+                  }}>
                   <p style={{ color: 'var(--text)' }}>{n.note}</p>
-                  <p className="mt-1" style={{ color: 'var(--muted)' }}>{n.analyst} · {fmtDate(n.created_at)}</p>
+                  <p className="mt-1" style={{ color: 'var(--muted)' }}>
+                    {n.analyst} · {fmtDate(n.created_at)}
+                  </p>
                 </div>
               ))}
             </div>
             <form onSubmit={handleAddNote} className="space-y-2">
               <textarea className="input resize-none h-16 text-xs"
-                placeholder="Add investigation note…"
-                value={noteText} onChange={e => setNoteText(e.target.value)} />
-              <button type="submit" disabled={!noteText.trim() || submittingNote}
+                placeholder="Add investigation note..."
+                value={noteText}
+                onChange={e => setNoteText(e.target.value)} />
+              <button type="submit"
+                disabled={!noteText.trim() || submittingNote}
                 className="btn-secondary w-full flex items-center justify-center gap-2 text-xs">
                 {submittingNote ? <Spinner size="sm" /> : <Send className="w-3.5 h-3.5" />}
                 Add Note
