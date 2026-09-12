@@ -1,4 +1,4 @@
-"""AEGIS — Alert Evaluation & Guided Investigation System v2.0"""
+"""AEGIS — Alert Evaluation & Guided Investigation System v2.1"""
 from __future__ import annotations
 import logging, os
 from fastapi import FastAPI
@@ -14,7 +14,7 @@ settings = get_settings()
 app = FastAPI(
     title="AEGIS",
     description="Alert Evaluation & Guided Investigation System",
-    version="2.0.0",
+    version="2.1.0",
     docs_url="/api/docs",
     redoc_url="/api/redoc",
 )
@@ -36,31 +36,44 @@ for r in (auth.router, alerts.router, audit.router, admin.router,
 @app.on_event("startup")
 def on_startup():
     log = logging.getLogger(__name__)
+    needs_recreate = False
     try:
         from sqlalchemy import inspect as sa_inspect
         from app.database import engine, Base
         insp = sa_inspect(engine)
         existing = insp.get_table_names()
-        needs_recreate = False
-        if "users" not in existing or "audit_logs" not in existing or "api_keys" not in existing:
+
+        required_tables = {"users", "audit_logs", "api_keys", "alerts",
+                           "analyses", "investigation_notes"}
+        if not required_tables.issubset(set(existing)):
+            log.info("Missing tables — recreating schema")
             needs_recreate = True
-        # Check for removed columns (approval_status removed in v2.1)
+
+        # Detect old schema with approval_status column
         if not needs_recreate and "users" in existing:
             cols = [c["name"] for c in insp.get_columns("users")]
-            # If old schema has approval_status, recreate clean
             if "approval_status" in cols:
-                log.info("Old schema detected — recreating tables")
+                log.info("Old schema (approval_status) detected — recreating")
                 needs_recreate = True
+
         if needs_recreate:
             Base.metadata.drop_all(bind=engine)
-            log.info("Tables dropped for recreation")
+            log.info("Old tables dropped")
+
     except Exception as e:
-        log.warning("Schema check: %s", e)
+        log.warning("Schema check error: %s", e)
+        needs_recreate = True
+        try:
+            from app.database import engine, Base
+            Base.metadata.drop_all(bind=engine)
+        except Exception:
+            pass
+
     init_db()
     os.makedirs(settings.upload_dir, exist_ok=True)
-    log.info("AEGIS v2.1 started")
+    log.info("AEGIS v2.1 started — all tables ready")
 
 
 @app.get("/api/health")
 def health():
-    return {"status": "ok", "service": "AEGIS", "version": "2.0.0"}
+    return {"status": "ok", "service": "AEGIS", "version": "2.1.0"}
