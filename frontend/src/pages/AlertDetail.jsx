@@ -182,13 +182,11 @@ export default function AlertDetail() {
             </Section>
           )}
 
-          {/* Language selector + Analysis */}
+          {/* Language selector — always visible */}
           <Section icon={Cpu}
             title={`AI Analysis${analysis ? ` · ${analysis.is_ai_generated ? analysis.ai_model : 'Rule-Based'}` : ''}`}
             right={
-              <LanguageSelector value={language} onChange={lang => {
-                setLanguage(lang)
-              }} />
+              <LanguageSelector value={language} onChange={setLanguage} />
             }
           >
             {analysis ? (
