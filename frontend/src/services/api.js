@@ -19,9 +19,15 @@ api.interceptors.response.use(
   res => res,
   err => {
     if (err.response?.status === 401) {
-      localStorage.removeItem('aegis_token')
-      localStorage.removeItem('aegis_user')
-      window.location.href = '/login'
+      // Only redirect if it's NOT a login/register attempt
+      const url = err.config?.url || ''
+      const isAuthAttempt = url.includes('/auth/login') || url.includes('/auth/register')
+      if (!isAuthAttempt) {
+        localStorage.removeItem('aegis_token')
+        localStorage.removeItem('aegis_user')
+        sessionStorage.clear()
+        window.location.href = '/login'
+      }
     }
     return Promise.reject(err)
   }
