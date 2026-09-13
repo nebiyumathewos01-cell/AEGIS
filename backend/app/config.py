@@ -19,8 +19,8 @@ class Settings(BaseSettings):
     app_host: str = "0.0.0.0"
     app_port: int = 8000
 
-    # Database — defaults to PostgreSQL on Render
-    database_url: str = "postgresql://aegis_aegis:i2N8m89W9Z4GP90AFiCe0CD4jLpkKGdV@dpg-daiinb0ae00c73emape0-a/aegis_db"
+    # Database — PostgreSQL on Render (external URL for Docker)
+    database_url: str = "postgresql://aegis_aegis:i2N8m89W9Z4GP90AFiCe0CD4jLpkKGdV@dpg-daiinb0ae00c73emape0-a.oregon-postgres.render.com/aegis_db"
 
     # AI / Ollama (optional — app works without it)
     ollama_base_url: str = "http://localhost:11434"
