@@ -1,28 +1,26 @@
 import { useState, useEffect } from 'react'
 import {
-  Shield, Users, CheckCircle,
-  UserX, UserCheck, RefreshCw,
-  Crown
+  Shield, Users, CheckCircle, UserX,
+  UserCheck, RefreshCw, Crown, Clock, AlertTriangle
 } from 'lucide-react'
 import {
-  getAdminStats, getAdminUsers,
-  approveUser, rejectUser, suspendUser, unsuspendUser
+  getAdminStats, getAdminUsers, suspendUser, unsuspendUser
 } from '../services/api'
 import Spinner from '../components/Spinner'
 import PageHeader from '../components/PageHeader'
-import { fmtDate, fmtRelative } from '../utils/format'
+import { fmtDate } from '../utils/format'
 
-// ── Status badge ──────────────────────────────────────────────────────────────
-const STATUS_STYLES = {
-  active:    'bg-green-950/40 text-risk-low border-green-800/40',
-  suspended: 'bg-gray-800/50 text-gray-400 border-gray-700/40',
-}
-
+// ── Status pill ───────────────────────────────────────────────────────────────
 function StatusPill({ is_active }) {
-  const status = is_active ? 'active' : 'suspended'
-  return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold border capitalize ${STATUS_STYLES[status]}`}>
-      {status}
+  return is_active ? (
+    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold"
+      style={{ background: 'rgba(0,212,170,0.12)', color: '#00d4aa', border: '1px solid rgba(0,212,170,0.3)' }}>
+      Active
+    </span>
+  ) : (
+    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold"
+      style={{ background: 'rgba(136,136,187,0.12)', color: '#8888bb', border: '1px solid rgba(136,136,187,0.3)' }}>
+      Suspended
     </span>
   )
 }
@@ -30,233 +28,248 @@ function StatusPill({ is_active }) {
 // ── Stat card ─────────────────────────────────────────────────────────────────
 function StatCard({ icon: Icon, label, value, color }) {
   return (
-    <div className="card flex items-center gap-3 py-3">
-      <div className="p-2 bg-cyber-bg border border-cyber-border rounded-lg shrink-0">
-        <Icon className={`w-4 h-4 ${color}`} />
+    <div className="panel flex items-center gap-3 py-3">
+      <div className="p-2 rounded shrink-0"
+        style={{ background: 'var(--surface2)', border: '1px solid var(--border)' }}>
+        <Icon className="w-4 h-4" style={{ color }} />
       </div>
       <div>
-        <p className="text-xl font-bold text-cyber-text">{value}</p>
-        <p className="text-xs text-cyber-muted">{label}</p>
+        <p className="text-2xl font-black" style={{ color: 'var(--text)' }}>{value}</p>
+        <p className="text-xs" style={{ color: 'var(--muted)' }}>{label}</p>
       </div>
     </div>
   )
 }
 
-// ── User row ──────────────────────────────────────────────────────────────────
-function UserRow({ user, onAction, loading }) {
-  const [expanded, setExpanded] = useState(false)
-
-  return (
-    <>
-      <tr className="border-b border-cyber-border/30 hover:bg-cyber-border/10 transition-colors">
-        {/* User */}
-        <td className="py-3.5 px-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-full bg-cyber-accent/20 border border-cyber-accent/30
-                            flex items-center justify-center shrink-0">
-              <span className="text-xs font-bold text-cyber-accent">
-                {user.full_name[0]?.toUpperCase()}
-              </span>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-cyber-text">{user.full_name}</p>
-              <p className="text-xs text-cyber-muted font-mono">@{user.username}</p>
-            </div>
-          </div>
-        </td>
-
-        {/* Email */}
-        <td className="py-3.5 px-4">
-          <p className="text-xs font-mono text-cyber-muted">{user.email}</p>
-        </td>
-
-        {/* Role */}
-        <td className="py-3.5 px-4">
-          {user.role === 'admin' ? (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs
-                             font-semibold bg-cyber-accent/10 text-cyber-accent border border-cyber-accent/30">
-              <Crown className="w-3 h-3" /> Admin
-            </span>
-          ) : (
-            <span className="text-xs text-cyber-muted capitalize">{user.role}</span>
-          )}
-        </td>
-
-        {/* Status */}
-        <td className="py-3.5 px-4"><StatusPill is_active={user.is_active} /></td>
-
-        {/* Alerts count */}
-        <td className="py-3.5 px-4">
-          <span className="text-xs font-mono text-cyber-muted">{user.alert_count}</span>
-        </td>
-
-        {/* Joined */}
-        <td className="py-3.5 px-4">
-          <p className="text-xs text-cyber-muted">{fmtRelative(user.created_at)}</p>
-        </td>
-
-        {/* Actions */}
-        <td className="py-3.5 px-4">
-        {user.role !== 'admin' && (
-            <div className="flex items-center gap-1.5">
-              {user.approval_status === 'approved' && (
-                <button
-                  onClick={() => onAction('suspend', user.id)}
-                  disabled={loading}
-                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium
-                             bg-gray-800/50 text-gray-400 border border-gray-700/40
-                             hover:bg-gray-700/50 transition-colors disabled:opacity-40"
-                >
-                  <UserX className="w-3.5 h-3.5" /> Suspend
-                </button>
-              )}
-              {user.approval_status === 'suspended' && (
-                <button
-                  onClick={() => onAction('unsuspend', user.id)}
-                  disabled={loading}
-                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium
-                             bg-green-950/40 text-risk-low border border-green-800/40
-                             hover:bg-green-950/60 transition-colors disabled:opacity-40"
-                >
-                  <UserCheck className="w-3.5 h-3.5" /> Restore
-                </button>
-              )}
-            </div>
-          )}
-        </td>
-      </tr>
-    </>
-  )
-}
-
-// ── Main page ─────────────────────────────────────────────────────────────────
 export default function AdminPanel() {
-  const [stats, setStats]     = useState(null)
-  const [users, setUsers]     = useState([])
-  const [filter, setFilter]   = useState('')
+  const [stats, setStats]   = useState(null)
+  const [users, setUsers]   = useState([])
+  const [filter, setFilter] = useState('all')
   const [loading, setLoading] = useState(true)
   const [acting, setActing]   = useState(false)
-  const [msg, setMsg]         = useState('')
+  const [msg, setMsg]         = useState({ text: '', type: 'success' })
 
   async function load() {
     setLoading(true)
     try {
-      const [s, u] = await Promise.all([
-        getAdminStats(),
-        getAdminUsers(filter || undefined),
-      ])
+      const [s, u] = await Promise.all([getAdminStats(), getAdminUsers()])
       setStats(s)
-      // filter locally by is_active
-      let filtered = u.users
-      if (filter === 'active')    filtered = u.users.filter(u => u.is_active)
-      if (filter === 'suspended') filtered = u.users.filter(u => !u.is_active)
-      setUsers(filtered)
+      setUsers(u.users || [])
     } finally {
       setLoading(false)
     }
   }
 
-  useEffect(() => { load() }, [filter])
+  useEffect(() => { load() }, [])
 
-  async function handleAction(action, userId) {
+  // Filter locally
+  const filtered = users.filter(u => {
+    if (filter === 'active')    return u.is_active
+    if (filter === 'suspended') return !u.is_active
+    return true
+  })
+
+  async function handleSuspend(userId, currentlyActive) {
     setActing(true)
-    setMsg('')
+    setMsg({ text: '', type: 'success' })
     try {
-      const actions = { approve: approveUser, reject: rejectUser,
-                        suspend: suspendUser, unsuspend: unsuspendUser }
-      const res = await actions[action](userId)
-      setMsg(res.message)
+      if (currentlyActive) {
+        await suspendUser(userId)
+        setMsg({ text: 'User suspended successfully.', type: 'success' })
+      } else {
+        await unsuspendUser(userId)
+        setMsg({ text: 'User restored successfully.', type: 'success' })
+      }
       await load()
     } catch (e) {
-      setMsg(e?.response?.data?.detail ?? 'Action failed')
+      setMsg({ text: e?.response?.data?.detail ?? 'Action failed', type: 'error' })
     } finally {
       setActing(false)
     }
   }
 
-  const pendingCount = stats?.pending_users ?? 0
-
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-5">
       <PageHeader
         title="Admin Panel"
-        subtitle="Manage user accounts and access approvals"
+        subtitle="Manage user accounts — see who joined, when, and their status"
         actions={
-          <button onClick={load} className="btn-ghost flex items-center gap-1.5 text-sm">
+          <button onClick={load} className="btn-ghost flex items-center gap-1.5 text-xs">
             <RefreshCw className="w-3.5 h-3.5" /> Refresh
           </button>
         }
       />
 
-      {/* Success/error message */}
-      {msg && (
-        <div className="px-4 py-2.5 bg-green-950/30 border border-green-800/40 rounded-lg text-sm text-risk-low">
-          {msg}
+      {/* Message */}
+      {msg.text && (
+        <div className="px-4 py-2.5 rounded text-sm"
+          style={msg.type === 'success'
+            ? { background: 'rgba(0,212,170,0.08)', border: '1px solid rgba(0,212,170,0.3)', color: '#00d4aa' }
+            : { background: 'rgba(255,34,68,0.08)', border: '1px solid rgba(255,34,68,0.3)', color: '#ff2244' }}>
+          {msg.text}
         </div>
       )}
 
       {/* Stats */}
       {stats && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard icon={Users}       label="Total Users"    value={stats.total_users}     color="text-cyber-accent" />
-          <StatCard icon={CheckCircle} label="Active"         value={stats.active_users}    color="text-risk-low" />
-          <StatCard icon={UserX}       label="Suspended"      value={stats.suspended_users} color="text-risk-high" />
-          <StatCard icon={Shield}      label="Total Alerts"   value={stats.total_alerts}    color="text-cyber-accent" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <StatCard icon={Users}        label="Total Users"   value={stats.total_users}     color="var(--accent)" />
+          <StatCard icon={CheckCircle}  label="Active"        value={stats.active_users}    color="#00d4aa" />
+          <StatCard icon={UserX}        label="Suspended"     value={stats.suspended_users} color="#ff2244" />
+          <StatCard icon={Shield}       label="Total Alerts"  value={stats.total_alerts}    color="var(--teal)" />
         </div>
       )}
 
       {/* Filter tabs */}
-      <div className="card py-3 flex items-center gap-2 flex-wrap">
+      <div className="panel py-3 flex items-center gap-2 flex-wrap">
         {[
-          { value: '',          label: 'All Users' },
-          { value: 'active',    label: 'Active' },
-          { value: 'suspended', label: 'Suspended' },
+          { value: 'all',       label: `All Users (${users.length})` },
+          { value: 'active',    label: `Active (${users.filter(u => u.is_active).length})` },
+          { value: 'suspended', label: `Suspended (${users.filter(u => !u.is_active).length})` },
         ].map(({ value, label }) => (
-          <button
-            key={value}
-            onClick={() => setFilter(value)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
-              filter === value
-                ? 'bg-cyber-accent/10 text-cyber-accent border-cyber-accent/30'
-                : 'text-cyber-muted border-cyber-border hover:text-cyber-text'
-            }`}
-          >
+          <button key={value} onClick={() => setFilter(value)}
+            className="px-3 py-1.5 rounded text-xs font-medium transition-all"
+            style={filter === value ? {
+              background: 'rgba(255,107,53,0.12)',
+              color: 'var(--accent)',
+              border: '1px solid rgba(255,107,53,0.3)',
+            } : {
+              color: 'var(--muted)',
+              border: '1px solid var(--border)',
+            }}>
             {label}
           </button>
         ))}
-        <span className="ml-auto text-xs text-cyber-muted">{users.length} users</span>
       </div>
 
       {/* Users table */}
-      <div className="card p-0 overflow-hidden">
+      <div className="panel p-0 overflow-hidden">
         {loading ? (
           <div className="flex justify-center py-16"><Spinner size="lg" /></div>
-        ) : users.length === 0 ? (
+        ) : filtered.length === 0 ? (
           <div className="text-center py-12">
-            <Users className="w-8 h-8 text-cyber-muted mx-auto mb-2" />
-            <p className="text-sm text-cyber-muted">No users found</p>
+            <Users className="w-8 h-8 mx-auto mb-2" style={{ color: 'var(--muted)' }} />
+            <p className="text-sm" style={{ color: 'var(--muted)' }}>No users found</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-cyber-border bg-cyber-bg/50">
-                  {['User', 'Email', 'Role', 'Status', 'Alerts', 'Joined', 'Actions'].map(h => (
-                    <th key={h} className="text-left text-xs text-cyber-muted font-semibold
-                                           uppercase tracking-wide py-3 px-4 whitespace-nowrap">
+                <tr style={{ borderBottom: '2px solid var(--border)', background: 'var(--surface2)' }}>
+                  {['#', 'User', 'Email', 'Role', 'Status', 'Alerts', 'Joined (Exact)', 'Actions'].map(h => (
+                    <th key={h} className="text-left py-3 px-4 whitespace-nowrap text-xs font-bold uppercase tracking-wide"
+                      style={{ color: 'var(--muted)' }}>
                       {h}
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {users.map(u => (
-                  <UserRow
-                    key={u.id}
-                    user={u}
-                    onAction={handleAction}
-                    loading={acting}
-                  />
+                {filtered.map((u, idx) => (
+                  <tr key={u.id}
+                    style={{ borderBottom: '1px solid var(--border)' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--surface2)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+
+                    {/* # */}
+                    <td className="py-3.5 px-4">
+                      <span className="text-xs font-mono" style={{ color: 'var(--muted)' }}>
+                        {idx + 1}
+                      </span>
+                    </td>
+
+                    {/* User */}
+                    <td className="py-3.5 px-4">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded flex items-center justify-center shrink-0 text-xs font-black"
+                          style={{
+                            background: 'rgba(255,107,53,0.15)',
+                            color: 'var(--accent)',
+                            border: '1px solid rgba(255,107,53,0.3)',
+                          }}>
+                          {(u.full_name || '?')[0].toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold" style={{ color: 'var(--text)' }}>
+                            {u.full_name}
+                          </p>
+                          <p className="text-xs font-mono" style={{ color: 'var(--muted)' }}>
+                            @{u.username}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Email */}
+                    <td className="py-3.5 px-4">
+                      <span className="text-xs font-mono" style={{ color: 'var(--muted)' }}>
+                        {u.email}
+                      </span>
+                    </td>
+
+                    {/* Role */}
+                    <td className="py-3.5 px-4">
+                      {u.role === 'admin' ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold"
+                          style={{ background: 'rgba(255,107,53,0.12)', color: 'var(--accent)', border: '1px solid rgba(255,107,53,0.3)' }}>
+                          <Crown className="w-3 h-3" /> Admin
+                        </span>
+                      ) : (
+                        <span className="text-xs capitalize" style={{ color: 'var(--muted)' }}>
+                          {u.role}
+                        </span>
+                      )}
+                    </td>
+
+                    {/* Status */}
+                    <td className="py-3.5 px-4">
+                      <StatusPill is_active={u.is_active} />
+                    </td>
+
+                    {/* Alert count */}
+                    <td className="py-3.5 px-4">
+                      <span className="text-xs font-mono font-bold" style={{ color: 'var(--teal)' }}>
+                        {u.alert_count}
+                      </span>
+                    </td>
+
+                    {/* Joined — exact date and time */}
+                    <td className="py-3.5 px-4">
+                      <div className="flex items-center gap-1.5">
+                        <Clock className="w-3 h-3 shrink-0" style={{ color: 'var(--muted)' }} />
+                        <span className="text-xs font-mono" style={{ color: 'var(--text)' }}>
+                          {fmtDate(u.created_at)}
+                        </span>
+                      </div>
+                    </td>
+
+                    {/* Actions */}
+                    <td className="py-3.5 px-4">
+                      {u.role !== 'admin' && (
+                        <button
+                          onClick={() => handleSuspend(u.id, u.is_active)}
+                          disabled={acting}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-all disabled:opacity-40"
+                          style={u.is_active ? {
+                            background: 'rgba(255,34,68,0.08)',
+                            color: '#ff2244',
+                            border: '1px solid rgba(255,34,68,0.3)',
+                          } : {
+                            background: 'rgba(0,212,170,0.08)',
+                            color: '#00d4aa',
+                            border: '1px solid rgba(0,212,170,0.3)',
+                          }}>
+                          {u.is_active
+                            ? <><UserX className="w-3.5 h-3.5" /> Suspend</>
+                            : <><UserCheck className="w-3.5 h-3.5" /> Restore</>
+                          }
+                        </button>
+                      )}
+                      {u.role === 'admin' && (
+                        <span className="text-xs" style={{ color: 'var(--muted)' }}>—</span>
+                      )}
+                    </td>
+                  </tr>
                 ))}
               </tbody>
             </table>
@@ -264,13 +277,14 @@ export default function AdminPanel() {
         )}
       </div>
 
-      {/* Privacy notice */}
-      <div className="flex items-start gap-3 px-4 py-3 bg-cyber-bg border border-cyber-border rounded-lg">
-        <Shield className="w-4 h-4 text-cyber-accent shrink-0 mt-0.5" />
-        <p className="text-xs text-cyber-muted leading-relaxed">
-          <span className="text-cyber-text font-medium">Confidentiality Notice: </span>
-          This panel shows only account metadata. Alert content, raw logs, and analysis results
-          of individual users are never accessible to administrators. User data is fully isolated.
+      {/* Confidentiality notice */}
+      <div className="flex items-start gap-3 px-4 py-3 rounded"
+        style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderLeft: '3px solid var(--teal)' }}>
+        <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" style={{ color: 'var(--teal)' }} />
+        <p className="text-xs leading-relaxed" style={{ color: 'var(--muted)' }}>
+          <span className="font-semibold" style={{ color: 'var(--text)' }}>Confidentiality: </span>
+          Admin sees only account metadata (name, email, join date, status).
+          Alert content, raw logs, and analysis results are never accessible to administrators.
         </p>
       </div>
     </div>
