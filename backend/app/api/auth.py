@@ -15,18 +15,41 @@ from app.services.audit_service import log_action
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
+COMMON_PASSWORDS = {
+    "password", "12345678", "123456789", "password1", "iloveyou",
+    "sunshine", "princess", "football", "welcome1", "shadow123",
+    "monkey123", "dragon123", "master123", "abc12345", "letmein1",
+    "qwerty123", "passw0rd", "starwars", "baseball", "superman",
+    "batman123", "trustno1", "hello123", "freedom1", "whatever",
+    "admin123", "login123", "test1234", "pass1234", "qwertyui",
+}
+
+
 class RegisterRequest(BaseModel):
     email: str = Field(..., min_length=5, max_length=256)
     username: str = Field(..., min_length=3, max_length=64)
     full_name: str = Field(..., min_length=2, max_length=128)
-    password: str = Field(..., min_length=8, max_length=128)
+    # NIST SP 800-63B: min 8 chars, no max complexity requirements
+    password: str = Field(..., min_length=8, max_length=256)
 
     @field_validator("username")
     @classmethod
-    def username_alphanumeric(cls, v: str) -> str:
+    def username_lowercase(cls, v: str) -> str:
+        v = v.lower().strip()
         if not v.replace("_", "").replace("-", "").isalnum():
-            raise ValueError("Username can only contain letters, numbers, _ and -")
-        return v.lower().strip()
+            raise ValueError("Username can only contain lowercase letters, numbers, _ and -")
+        return v
+
+    @field_validator("password")
+    @classmethod
+    def password_nist(cls, v: str) -> str:
+        # NIST SP 800-63B: check against common passwords
+        if v.lower() in COMMON_PASSWORDS:
+            raise ValueError(
+                "This password is too commonly used. "
+                "Please choose a different password (NIST SP 800-63B)."
+            )
+        return v
 
 
 class LoginRequest(BaseModel):
