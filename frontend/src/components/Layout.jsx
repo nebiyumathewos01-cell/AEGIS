@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Shield, Search, BookOpen,
   AlertTriangle, Plus, LogOut, History, Crown,
   Settings, ChevronDown, Menu, X, Sun, Moon,
-  Radio, Zap, Server
+  Radio, Zap, Server, Bot
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
@@ -19,7 +19,6 @@ const NAV = [
   { to: '/audit',               icon: Shield,          label: 'Audit Log',      group: 'tools' },
   { to: '/settings',            icon: Settings,        label: 'Settings & API', group: 'tools' },
 ]
-
 export default function Layout() {
   const navigate         = useNavigate()
   const { user, logout } = useAuth()

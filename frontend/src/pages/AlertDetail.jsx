@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, Cpu, FileText, Shield, AlertTriangle,
-  CheckCircle, BookOpen, Send, Download
+  CheckCircle, BookOpen, Send, Download, Bot
 } from 'lucide-react'
 import { useAlert } from '../hooks/useAlert'
 import RiskBadge from '../components/RiskBadge'
@@ -122,6 +122,11 @@ export default function AlertDetail() {
           <button className="btn-secondary flex items-center gap-1.5 text-xs"
             onClick={() => navigate(`/reports/${id}`)}>
             <Download className="w-3.5 h-3.5" /> Report
+          </button>
+          <button className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded font-semibold transition-all"
+            onClick={() => navigate(`/agent/${id}`)}
+            style={{ background: 'rgba(168,85,247,0.12)', color: '#a855f7', border: '1px solid rgba(168,85,247,0.3)' }}>
+            <Bot className="w-3.5 h-3.5" /> Agent
           </button>
           <button className="btn-primary flex items-center gap-2 text-xs"
             onClick={handleAnalyze} disabled={analyzing}>

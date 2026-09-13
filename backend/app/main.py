@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.database import init_db
 import app.models  # noqa
-from app.api import (alerts, auth, audit, admin, dashboard, demo,
+from app.api import (alerts, auth, audit, admin, agent, dashboard, demo,
                      environment, integrations, investigations,
                      playbook, reports, threat_intelligence)
 
@@ -30,7 +30,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-for r in (auth.router, alerts.router, audit.router, admin.router,
+for r in (auth.router, alerts.router, agent.router, audit.router, admin.router,
           dashboard.router, demo.router, environment.router,
           integrations.router, investigations.router,
           playbook.router, reports.router, threat_intelligence.router):

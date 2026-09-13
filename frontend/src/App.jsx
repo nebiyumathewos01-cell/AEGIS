@@ -17,6 +17,7 @@ import AuditLog from './pages/AuditLog'
 import History from './pages/History'
 import AdminPanel from './pages/AdminPanel'
 import SettingsPage from './pages/Settings'
+import AgentInvestigation from './pages/AgentInvestigation'
 import EnvironmentProfile from './pages/EnvironmentProfile'
 
 export default function App() {
@@ -42,6 +43,7 @@ export default function App() {
             <Route path="audit"               element={<AuditLog />} />
             <Route path="settings"            element={<SettingsPage />} />
             <Route path="environment"          element={<EnvironmentProfile />} />
+            <Route path="agent/:id"            element={<AgentInvestigation />} />
             <Route path="admin" element={
               <AdminRoute><AdminPanel /></AdminRoute>
             } />

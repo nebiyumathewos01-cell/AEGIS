@@ -43,7 +43,12 @@ export const login = (data) =>
 export const getMe = () =>
   api.get('/auth/me').then(r => r.data)
 
-// ── Environment Profile ───────────────────────────────────────────────────────
+// ── Agent ─────────────────────────────────────────────────────────────────────
+export const runAgentInvestigation = (alertId) =>
+  api.post(`/agent/${alertId}/investigate`).then(r => r.data)
+
+export const getAgentStatus = (alertId) =>
+  api.get(`/agent/${alertId}/status`).then(r => r.data)
 export const getEnvironmentProfile = () =>
   api.get('/environment').then(r => r.data)
 
