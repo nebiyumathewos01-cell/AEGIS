@@ -28,7 +28,12 @@ export default function Login() {
   async function handleSubmit(e) {
     e.preventDefault()
     if (!email.trim() || !password) return
-    setError(''); setLoading(true)
+    setError('')
+    setLoading(true)
+    // Always clear stale data before login attempt
+    localStorage.removeItem('aegis_token')
+    localStorage.removeItem('aegis_user')
+    sessionStorage.clear()
     try {
       const res = await login({ email: email.trim().toLowerCase(), password })
       saveAuth(res.access_token, res.user)
