@@ -31,9 +31,9 @@ app.add_middleware(
 )
 
 for r in (auth.router, alerts.router, agent.router, audit.router, admin.router,
-          dashboard.router, demo.router, environment.router,
-          integrations.router, investigations.router,
-          playbook.router, reports.router, threat_intelligence.router):
+          dashboard.router, demo.router, environment.router, integrations.router,
+          investigations.router, playbook.router, reports.router,
+          threat_intelligence.router):
     app.include_router(r)
 
 

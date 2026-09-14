@@ -44,3 +44,8 @@ class Alert(Base):
         "InvestigationNote", back_populates="alert",
         cascade="all, delete-orphan", order_by="InvestigationNote.created_at",
     )
+    agent_sessions: Mapped[list[AgentSession]] = relationship(
+        "AgentSession", back_populates="alert",
+        cascade="all, delete-orphan", order_by="AgentSession.created_at.desc()",
+    )
+

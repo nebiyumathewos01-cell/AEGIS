@@ -21,12 +21,24 @@ _connect_args = {}
 if _url.startswith("sqlite"):
     _connect_args = {"check_same_thread": False}
 
-engine = create_engine(
-    _url,
-    connect_args=_connect_args,
-    echo=False,
-    pool_pre_ping=True,  # reconnect if connection dropped
-)
+try:
+    engine = create_engine(
+        _url,
+        connect_args=_connect_args,
+        echo=False,
+        pool_pre_ping=True,  # reconnect if connection dropped
+    )
+    # Validate DBAPI can load (catches ModuleNotFoundError: psycopg2)
+    _ = engine.dialect.dbapi
+except Exception:
+    _url = "sqlite:///./aegis.db"
+    _connect_args = {"check_same_thread": False}
+    engine = create_engine(
+        _url,
+        connect_args=_connect_args,
+        echo=False,
+        pool_pre_ping=True,
+    )
 
 SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 

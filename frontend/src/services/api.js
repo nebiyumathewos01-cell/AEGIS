@@ -43,12 +43,34 @@ export const login = (data) =>
 export const getMe = () =>
   api.get('/auth/me').then(r => r.data)
 
-// ── Agent ─────────────────────────────────────────────────────────────────────
-export const runAgentInvestigation = (alertId) =>
+// ── SOC Agent ─────────────────────────────────────────────────────────────────
+export const startSOCInvestigation  = (alertId) =>
   api.post(`/agent/${alertId}/investigate`).then(r => r.data)
 
-export const getAgentStatus = (alertId) =>
-  api.get(`/agent/${alertId}/status`).then(r => r.data)
+export const getAgentSession        = (sessionId) =>
+  api.get(`/agent/session/${sessionId}`).then(r => r.data)
+
+export const getAlertSessions       = (alertId) =>
+  api.get(`/agent/${alertId}/sessions`).then(r => r.data)
+
+export const getPendingApprovals    = () =>
+  api.get('/agent/approvals').then(r => r.data)
+
+export const approveAgentAction     = (actionId, note = '') =>
+  api.put(`/agent/actions/${actionId}/approve`, { analyst_note: note }).then(r => r.data)
+
+export const rejectAgentAction      = (actionId, note) =>
+  api.put(`/agent/actions/${actionId}/reject`, { analyst_note: note }).then(r => r.data)
+
+export const submitAgentFeedback    = (sessionId, payload) =>
+  api.post(`/agent/session/${sessionId}/feedback`, payload).then(r => r.data)
+
+export const getAgentStats          = () =>
+  api.get('/agent/stats').then(r => r.data)
+
+// ── Agent (legacy) ────────────────────────────────────────────────────────────
+export const runAgentInvestigation = (alertId) =>
+  api.post(`/agent/${alertId}/investigate`).then(r => r.data)
 export const getEnvironmentProfile = () =>
   api.get('/environment').then(r => r.data)
 

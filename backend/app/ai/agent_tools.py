@@ -225,15 +225,19 @@ def evaluate_risk_with_context(
         all_factors.append({"description": bf.split(" ", 1)[1], "score_delta": delta})
 
     result = {
-        "base_score":   base_result.risk_score,
-        "bonus_score":  bonus,
-        "final_score":  final_score,
-        "risk_level":   level,
-        "all_factors":  all_factors,
+        "rule_risk_score": base_result.risk_score,
+        "rule_risk_level": base_result.risk_level,
+        "base_score":      base_result.risk_score,
+        "bonus_score":     bonus,
+        "final_score":     base_result.risk_score,  # Rule-based score is preserved unchanged
+        "risk_level":      base_result.risk_level,   # Rule-based level is preserved unchanged
+        "context_score":   final_score,
+        "context_level":   level,
+        "all_factors":     all_factors,
     }
     summary = (
-        f"Risk re-evaluated: {final_score}/100 ({level}). "
-        f"Base score: {int(base_result.risk_score)}, agent bonus: +{bonus}."
+        f"Rule-based risk score preserved: {int(base_result.risk_score)}/100 ({base_result.risk_level}). "
+        f"Investigation context bonus: +{bonus} ({level} contextual severity)."
     )
     return tool_result("evaluate_risk", result, summary)
 
@@ -416,15 +420,15 @@ def generate_final_assessment(
     elif confidence_score >= 60:  confidence_label = "MEDIUM"
     else:                         confidence_label = "LOW"
 
-    final_risk = risk_result.get("risk_level", "HIGH") if risk_result else "HIGH"
-    final_score = risk_result.get("final_score", 70) if risk_result else 70
+    rule_level = alert_data.get("risk_level") or (risk_result.get("rule_risk_level") if risk_result else "LOW")
+    rule_score = alert_data.get("risk_score") if alert_data.get("risk_score") is not None else (risk_result.get("rule_risk_score", 0.0) if risk_result else 0.0)
 
     assessment = {
-        "verdict": f"{final_risk} — {alert_type.replace('_', ' ').title()} confirmed",
+        "verdict": f"{rule_level} — {alert_type.replace('_', ' ').title()} confirmed",
         "confidence": confidence_label,
         "confidence_score": confidence_score,
-        "final_risk_level": final_risk,
-        "final_risk_score": final_score,
+        "final_risk_level": rule_level,
+        "final_risk_score": rule_score,
         "key_findings": findings,
         "source_ip": source_ip,
         "alert_type": alert_type,
@@ -432,7 +436,7 @@ def generate_final_assessment(
     }
 
     summary = (
-        f"Investigation complete. Verdict: {final_risk}. "
+        f"Investigation complete. Verdict: {rule_level}. "
         f"Confidence: {confidence_label} ({confidence_score}%). "
         f"{len(findings)} supporting findings."
     )
