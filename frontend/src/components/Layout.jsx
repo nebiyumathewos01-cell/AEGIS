@@ -4,10 +4,11 @@ import {
   LayoutDashboard, Shield, Search, BookOpen,
   AlertTriangle, Plus, LogOut, History, Crown,
   Settings, ChevronDown, Menu, X, Sun, Moon,
-  Radio, Zap, Server, Bot
+  Radio, Zap, Server, Bot, HelpCircle
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
+import QuickGuideModal from './QuickGuideModal'
 
 const NAV = [
   { to: '/dashboard',           icon: LayoutDashboard, label: 'Dashboard',      group: 'main' },
@@ -24,6 +25,7 @@ export default function Layout() {
   const { dark, toggle } = useTheme()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
+  const [guideOpen, setGuideOpen]     = useState(false)
 
   function handleLogout() {
     logout()
@@ -212,6 +214,20 @@ export default function Layout() {
 
           <div className="flex-1" />
 
+          {/* Quick Guide button */}
+          <button onClick={() => setGuideOpen(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs font-semibold transition-all hover:brightness-110"
+            style={{
+              background: 'rgba(0, 229, 153, 0.1)',
+              border: '1px solid rgba(0, 229, 153, 0.3)',
+              color: 'var(--accent)',
+            }}
+            title="System Guide & Overview"
+          >
+            <HelpCircle className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Guide</span>
+          </button>
+
           {/* Status pill */}
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono"
             style={{ background: 'var(--surface2)', border: '1px solid var(--border)', color: 'var(--muted)' }}>
@@ -254,6 +270,9 @@ export default function Layout() {
           <Outlet />
         </main>
       </div>
+
+      {/* Quick Guide Modal */}
+      <QuickGuideModal isOpen={guideOpen} onClose={() => setGuideOpen(false)} />
     </div>
   )
 }
