@@ -53,8 +53,13 @@ class RegisterRequest(BaseModel):
 
 
 class LoginRequest(BaseModel):
-    email: str
+    email: str | None = None
+    username: str | None = None
     password: str
+
+    @property
+    def identifier(self) -> str:
+        return (self.email or self.username or "").strip()
 
 
 def _user_dict(user: User) -> dict:
@@ -100,11 +105,12 @@ async def login_form(request: Request, form: OAuth2PasswordRequestForm = Depends
 
 @router.post("/login/json")
 async def login_json(payload: LoginRequest, request: Request, db: Session = Depends(get_db)):
-    user = authenticate_user(db, payload.email, payload.password)
+    identifier = payload.identifier
+    user = authenticate_user(db, identifier, payload.password)
     if not user:
         await log_action(db, action="LOGIN_FAILED",
-                         detail=f"Failed login: {payload.email}", request=request)
-        raise HTTPException(401, "Incorrect email or password")
+                         detail=f"Failed login: {identifier}", request=request)
+        raise HTTPException(401, "Incorrect email, username, or password")
     await log_action(db, user=user, action="LOGIN_SUCCESS",
                      detail=f"Login: {user.email}", request=request)
     token = create_access_token({"sub": str(user.id)})

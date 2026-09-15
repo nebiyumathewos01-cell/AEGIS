@@ -12,7 +12,6 @@ import { useTheme } from '../context/ThemeContext'
 const NAV = [
   { to: '/dashboard',           icon: LayoutDashboard, label: 'Dashboard',      group: 'main' },
   { to: '/alerts',              icon: AlertTriangle,   label: 'Alerts',         group: 'main' },
-  { to: '/history',             icon: History,         label: 'History',        group: 'main' },
   { to: '/investigations',      icon: BookOpen,        label: 'Investigations', group: 'main' },
   { to: '/threat-intelligence', icon: Search,          label: 'Threat Intel',   group: 'tools' },
   { to: '/environment',         icon: Server,          label: 'Env Profile',    group: 'tools' },
@@ -96,7 +95,7 @@ export default function Layout() {
                 }`
               }
               style={({ isActive }) => isActive ? {
-                background: 'rgba(255,107,53,0.12)',
+                background: 'rgba(0, 229, 153, 0.12)',
                 color: 'var(--accent)',
                 borderLeft: '2px solid var(--accent)',
                 paddingLeft: '10px',
@@ -115,7 +114,7 @@ export default function Layout() {
             <NavLink key={to} to={to} onClick={() => setSidebarOpen(false)}
               className="flex items-center gap-2.5 px-3 py-2 rounded text-xs font-medium transition-all"
               style={({ isActive }) => isActive ? {
-                background: 'rgba(255,107,53,0.12)',
+                background: 'rgba(0, 229, 153, 0.12)',
                 color: 'var(--accent)',
                 borderLeft: '2px solid var(--accent)',
                 paddingLeft: '10px',
@@ -159,7 +158,7 @@ export default function Layout() {
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >
               <div className="w-6 h-6 rounded flex items-center justify-center shrink-0 text-[10px] font-bold"
-                style={{ background: 'rgba(255,107,53,0.2)', color: 'var(--accent)', border: '1px solid rgba(255,107,53,0.3)' }}>
+                style={{ background: 'rgba(0, 229, 153, 0.15)', color: 'var(--accent)', border: '1px solid rgba(0, 229, 153, 0.3)' }}>
                 {initials}
               </div>
               <div className="flex-1 text-left min-w-0">

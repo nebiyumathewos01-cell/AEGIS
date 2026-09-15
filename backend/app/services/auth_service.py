@@ -3,12 +3,14 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 from jose import jwt
 from passlib.context import CryptContext
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from app.config import get_settings
 from app.models.user import User
 
 settings = get_settings()
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# bcrypt__rounds=10 ensures fast login response without compromising security
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=10)
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
 
@@ -55,8 +57,13 @@ def create_user(db: Session, *, email: str, username: str,
     db.refresh(user)
     return user
 
-def authenticate_user(db: Session, email: str, password: str) -> User | None:
-    user = get_user_by_email(db, email)
+def authenticate_user(db: Session, identifier: str, password: str) -> User | None:
+    if not identifier:
+        return None
+    ident = identifier.lower().strip()
+    user = db.query(User).filter(
+        or_(User.email == ident, User.username == ident)
+    ).first()
     if not user:
         return None
     if not verify_password(password, user.hashed_password):

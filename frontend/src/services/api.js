@@ -5,6 +5,7 @@ const BASE = import.meta.env.VITE_API_URL || ''
 const api = axios.create({
   baseURL: `${BASE}/api`,
   headers: { 'Content-Type': 'application/json' },
+  timeout: 25000,
 })
 
 // Attach JWT token to every request
@@ -126,6 +127,7 @@ export const getDashboardStats = () =>
 // ── Admin ─────────────────────────────────────────────────────────────────────
 export const adminSetup    = (data) => api.post('/admin/setup', data).then(r => r.data)
 export const getAdminStats = () => api.get('/admin/stats').then(r => r.data)
+export const getAdminLogins = (limit = 50) => api.get('/admin/logins', { params: { limit } }).then(r => r.data)
 export const getAdminUsers = (status) =>
   api.get('/admin/users', { params: status ? { status } : {} }).then(r => r.data)
 export const approveUser   = (id) => api.put(`/admin/users/${id}/approve`).then(r => r.data)

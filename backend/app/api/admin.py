@@ -9,7 +9,9 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 from app.api.deps import get_current_user
 from app.database import get_db
+from datetime import datetime, timezone, timedelta
 from app.models.alert import Alert
+from app.models.audit_log import AuditLog
 from app.models.user import User
 from app.services.auth_service import admin_exists, create_user
 from app.services.audit_service import log_action
@@ -94,9 +96,52 @@ async def unsuspend_user(user_id: int, request: Request,
 
 @router.get("/stats")
 def platform_stats(db: Session = Depends(get_db), admin: User = Depends(require_admin)):
+    now = datetime.now(timezone.utc)
+    one_day_ago = now - timedelta(days=1)
+    seven_days_ago = now - timedelta(days=7)
+
     return {
-        "total_users":    db.query(func.count(User.id)).scalar(),
-        "active_users":   db.query(func.count(User.id)).filter(User.is_active == True).scalar(),
-        "suspended_users":db.query(func.count(User.id)).filter(User.is_active == False).scalar(),
-        "total_alerts":   db.query(func.count(Alert.id)).scalar(),
+        "total_users":      db.query(func.count(User.id)).scalar() or 0,
+        "active_users":     db.query(func.count(User.id)).filter(User.is_active == True).scalar() or 0,
+        "suspended_users":  db.query(func.count(User.id)).filter(User.is_active == False).scalar() or 0,
+        "new_users_today":  db.query(func.count(User.id)).filter(User.created_at >= one_day_ago).scalar() or 0,
+        "new_users_week":   db.query(func.count(User.id)).filter(User.created_at >= seven_days_ago).scalar() or 0,
+        "total_alerts":     db.query(func.count(Alert.id)).scalar() or 0,
+        "total_logins":     db.query(func.count(AuditLog.id)).filter(AuditLog.action == "LOGIN_SUCCESS").scalar() or 0,
     }
+
+
+@router.get("/logins")
+def list_logins(
+    limit: int = 50,
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    """List recent login attempts, registered emails, and timestamps."""
+    logs = (
+        db.query(AuditLog)
+        .filter(AuditLog.action.in_(["LOGIN_SUCCESS", "LOGIN_FAILED", "REGISTER", "LOGOUT"]))
+        .order_by(AuditLog.created_at.desc())
+        .limit(limit)
+        .all()
+    )
+    result = []
+    for log in logs:
+        clean_email = log.detail or ""
+        for prefix in ("Login: ", "Failed login: ", "New account: ", "Logout: "):
+            clean_email = clean_email.replace(prefix, "")
+        clean_email = clean_email.strip() or log.username or "Unknown"
+
+        result.append({
+            "id": log.id,
+            "user_id": log.user_id,
+            "email": clean_email,
+            "username": log.username,
+            "full_name": log.full_name,
+            "action": log.action,
+            "status": "Success" if log.action in ("LOGIN_SUCCESS", "REGISTER") else ("Failed" if log.action == "LOGIN_FAILED" else "Logout"),
+            "ip_address": log.ip_address or "Unknown",
+            "user_agent": log.user_agent,
+            "created_at": log.created_at.isoformat() if log.created_at else None,
+        })
+    return result

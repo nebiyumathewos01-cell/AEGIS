@@ -1,36 +1,36 @@
+/* ── Google Fonts ────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ── Google Fonts ────────────────────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
-
-/* ── CSS Variables — Dark (default) ─────────────────────────────────────── */
+/* ── CSS Variables — Dark (default: Deep Obsidian SOC) ──────────── */
 :root {
-  --bg:       #0d0d1a;
-  --surface:  #12122b;
-  --surface2: #1a1a3e;
-  --border:   #2a2a5a;
-  --border2:  #3a3a7a;
-  --text:     #e8e8ff;
-  --muted:    #8888bb;
-  --accent:   #ff6b35;
+  --bg:       #090a0f;
+  --surface:  #12141a;
+  --surface2: #181b24;
+  --border:   #222632;
+  --border2:  #2d3343;
+  --text:     #f0f3f8;
+  --muted:    #838e9e;
+  --accent:   #00e599;
   --teal:     #00d4aa;
-  --purple:   #a855f7;
+  --purple:   #8b5cf6;
   --yellow:   #f59e0b;
 }
 
 /* ── CSS Variables — Light ───────────────────────────────────────────────── */
 .light {
-  --bg:       #f0f2f8;
+  --bg:       #f8fafc;
   --surface:  #ffffff;
-  --surface2: #e8ebf5;
-  --border:   #c8cce0;
-  --border2:  #a8acd0;
-  --text:     #1a1a3a;
-  --muted:    #5a5a8a;
-  --accent:   #e85520;
-  --teal:     #008866;
+  --surface2: #f1f5f9;
+  --border:   #e2e8f0;
+  --border2:  #cbd5e1;
+  --text:     #0f172a;
+  --muted:    #64748b;
+  --accent:   #059669;
+  --teal:     #0d9488;
   --purple:   #7c3aed;
   --yellow:   #d97706;
 }
@@ -53,7 +53,7 @@
   ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
 
   /* Selection */
-  ::selection { background: rgba(255,107,53,0.25); color: var(--text); }
+  ::selection { background: rgba(0, 229, 153, 0.25); color: var(--text); }
 }
 
 /* ── Components ──────────────────────────────────────────────────────────── */

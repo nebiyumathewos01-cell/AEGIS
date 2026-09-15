@@ -41,8 +41,32 @@ export function statusBadgeClass(status) {
   return map[status?.toLowerCase()] ?? 'status-new'
 }
 
+const ALERT_TYPE_NAMES = {
+  brute_force_attempt: 'SSH Brute Force',
+  ssh_bruteforce:      'SSH Brute Force',
+  port_scan:           'Port Scan (SYN Recon)',
+  nmap_scan:           'Nmap Port Scan',
+  suspicious_login:    'Suspicious Admin Login',
+  sqli_attempt:        'SQL Injection (SQLi)',
+  web_attack_sqli:     'SQL Injection Attack',
+  xss_attempt:         'Cross-Site Scripting (XSS)',
+  web_attack_xss:      'Cross-Site Scripting Attack',
+  dos_attack:          'Denial of Service (DoS)',
+  privilege_escalation:'Privilege Escalation',
+  ransomware_detected: 'Ransomware Activity',
+  c2_communication:    'Command & Control (C2)',
+  malware_detected:    'Malware Execution',
+  unauthorized_access: 'Unauthorized Access Attempt',
+  password_spraying:   'Password Spraying Attack',
+}
+
 export function formatAlertType(type) {
-  return (type ?? 'Unknown')
+  if (!type) return 'Security Event'
+  const key = type.toLowerCase().trim()
+  if (ALERT_TYPE_NAMES[key]) {
+    return ALERT_TYPE_NAMES[key]
+  }
+  return type
     .replace(/_/g, ' ')
     .replace(/\b\w/g, c => c.toUpperCase())
 }

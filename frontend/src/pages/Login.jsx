@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Mail, Lock, Eye, EyeOff, AlertCircle, LogIn, Terminal, Shield, Zap, Activity } from 'lucide-react'
 import { login } from '../services/api'
@@ -25,6 +25,12 @@ export default function Login() {
   const [loading, setLoading]   = useState(false)
   const [error, setError]       = useState('')
 
+  // Pre-warm backend on page load to eliminate cold-start lag
+  useEffect(() => {
+    const baseUrl = import.meta.env.VITE_API_URL || ''
+    fetch(`${baseUrl}/api/health`, { mode: 'no-cors' }).catch(() => {})
+  }, [])
+
   async function handleSubmit(e) {
     e.preventDefault()
     if (!email.trim() || !password) return
@@ -39,7 +45,10 @@ export default function Login() {
       saveAuth(res.access_token, res.user)
       navigate('/dashboard', { replace: true })
     } catch (err) {
-      setError(err?.response?.data?.detail ?? 'Invalid email or password.')
+      const detail = err?.code === 'ECONNABORTED'
+        ? 'Connection timed out. Server may be starting up, please try again in a few seconds.'
+        : err?.response?.data?.detail ?? 'Invalid email, username, or password.'
+      setError(detail)
       setPassword('')
     } finally { setLoading(false) }
   }
@@ -133,12 +142,12 @@ export default function Login() {
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
             <div>
-              <label className="label">Email Address</label>
+              <label className="label">Email or Username</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none"
                   style={{ color: 'var(--muted)' }} />
-                <input id="email" type="email" name="aegis-email" autoComplete="username"
-                  className="input pl-9" placeholder="analyst@company.com"
+                <input id="email" type="text" name="aegis-email" autoComplete="username"
+                  className="input pl-9" placeholder="analyst@aegis.sec or username"
                   value={email} onChange={e => setEmail(e.target.value)} required />
               </div>
             </div>

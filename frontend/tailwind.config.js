@@ -5,29 +5,29 @@ export default {
   theme: {
     extend: {
       colors: {
-        // ── Dark mode (Burp Suite inspired) ──────────────────────
-        'd-bg':        '#0d0d1a',   // deepest background
-        'd-surface':   '#12122b',   // panel background
-        'd-surface2':  '#1a1a3e',   // elevated panels
-        'd-border':    '#2a2a5a',   // borders
-        'd-border2':   '#3a3a7a',   // hover borders
-        'd-text':      '#e8e8ff',   // primary text
-        'd-muted':     '#8888bb',   // secondary text
-        'd-accent':    '#ff6b35',   // Burp orange — primary actions
-        'd-teal':      '#00d4aa',   // Burp teal — success/highlight
-        'd-purple':    '#a855f7',   // purple accent
+        // ── Dark mode (Deep Obsidian SOC) ─────────────────────────
+        'd-bg':        '#090a0f',   // deepest background (obsidian slate)
+        'd-surface':   '#12141a',   // panel background
+        'd-surface2':  '#181b24',   // elevated panels
+        'd-border':    '#222632',   // borders
+        'd-border2':   '#2d3343',   // hover borders
+        'd-text':      '#f0f3f8',   // primary text
+        'd-muted':     '#838e9e',   // secondary text
+        'd-accent':    '#00e599',   // vibrant SOC Emerald
+        'd-teal':      '#00d4aa',   // cyber teal
+        'd-purple':    '#8b5cf6',   // purple accent
         'd-yellow':    '#f59e0b',   // warning
 
         // ── Light mode ────────────────────────────────────────────
-        'l-bg':        '#f0f2f8',
+        'l-bg':        '#f8fafc',
         'l-surface':   '#ffffff',
-        'l-surface2':  '#e8ebf5',
-        'l-border':    '#c8cce0',
-        'l-border2':   '#a8acd0',
-        'l-text':      '#1a1a3a',
-        'l-muted':     '#5a5a8a',
-        'l-accent':    '#e85520',
-        'l-teal':      '#008866',
+        'l-surface2':  '#f1f5f9',
+        'l-border':    '#e2e8f0',
+        'l-border2':   '#cbd5e1',
+        'l-text':      '#0f172a',
+        'l-muted':     '#64748b',
+        'l-accent':    '#059669',
+        'l-teal':      '#0d9488',
         'l-purple':    '#7c3aed',
         'l-yellow':    '#d97706',
 
