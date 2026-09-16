@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   Bot, ArrowLeft, Play, CheckCircle, XCircle,
@@ -101,6 +101,12 @@ function ActionCard({ action, onApprove, onReject, loading }) {
   const isPending = action.status === 'pending'
   const riskColor = RISK_COLORS[action.risk_level] || 'var(--muted)'
 
+  function handleConfirmReject() {
+    const note = rejectNote.trim() || 'Rejected by analyst'
+    onReject(action.id, note)
+    setShowReject(false)
+  }
+
   return (
     <div className="rounded overflow-hidden mb-3"
       style={{ border: `1px solid var(--border)`, borderLeft: `3px solid ${riskColor}`, background: 'var(--surface2)' }}>
@@ -127,7 +133,7 @@ function ActionCard({ action, onApprove, onReject, loading }) {
             </div>
             <p className="text-xs" style={{ color: 'var(--muted)' }}>{action.reasoning}</p>
             {action.command && (
-              <pre className="text-[10px] font-mono mt-1.5 p-1.5 rounded"
+              <pre className="text-[10px] font-mono mt-1.5 p-1.5 rounded overflow-x-auto"
                 style={{ background: 'var(--bg)', color: 'var(--teal)', border: '1px solid var(--border)' }}>
                 {action.command}
               </pre>
@@ -141,14 +147,20 @@ function ActionCard({ action, onApprove, onReject, loading }) {
 
           {isPending && (
             <div className="flex gap-1.5 shrink-0">
-              <button onClick={() => onApprove(action.id)} disabled={loading}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded text-xs font-medium"
-                style={{ background: 'rgba(0,212,170,0.12)', color: '#00d4aa', border: '1px solid rgba(0,212,170,0.3)' }}>
+              <button
+                type="button"
+                onClick={() => onApprove(action.id)}
+                disabled={loading}
+                className="flex items-center gap-1 px-3 py-2 rounded text-xs font-semibold touch-manipulation cursor-pointer transition-all hover:brightness-110 active:scale-95 disabled:opacity-50"
+                style={{ background: 'rgba(0,212,170,0.15)', color: '#00d4aa', border: '1px solid rgba(0,212,170,0.4)' }}>
                 <CheckCircle className="w-3.5 h-3.5" /> Approve
               </button>
-              <button onClick={() => setShowReject(v => !v)} disabled={loading}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded text-xs font-medium"
-                style={{ background: 'rgba(255,34,68,0.08)', color: '#ff2244', border: '1px solid rgba(255,34,68,0.3)' }}>
+              <button
+                type="button"
+                onClick={() => setShowReject(v => !v)}
+                disabled={loading}
+                className="flex items-center gap-1 px-3 py-2 rounded text-xs font-semibold touch-manipulation cursor-pointer transition-all hover:brightness-110 active:scale-95 disabled:opacity-50"
+                style={{ background: 'rgba(255,34,68,0.12)', color: '#ff2244', border: '1px solid rgba(255,34,68,0.4)' }}>
                 <XCircle className="w-3.5 h-3.5" /> Reject
               </button>
             </div>
@@ -156,17 +168,39 @@ function ActionCard({ action, onApprove, onReject, loading }) {
         </div>
 
         {showReject && isPending && (
-          <div className="mt-2 space-y-1.5">
-            <input className="input text-xs py-1.5"
-              placeholder="Reason for rejection (required)..."
+          <div className="mt-3 p-3 rounded border border-red-500/30 bg-red-500/5 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-red-400 flex items-center gap-1">
+                <XCircle className="w-3.5 h-3.5" /> Confirm Action Rejection
+              </span>
+              <span className="text-[10px] text-cyber-muted">Reason optional</span>
+            </div>
+            <input
+              type="text"
+              className="input text-xs py-2 w-full"
+              placeholder="Reason for rejection (e.g. Scheduled test, Internal subnet)..."
               value={rejectNote}
-              onChange={e => setRejectNote(e.target.value)} />
-            <button
-              onClick={() => { if (rejectNote.trim()) { onReject(action.id, rejectNote); setShowReject(false) } }}
-              disabled={!rejectNote.trim() || loading}
-              className="btn-secondary text-xs px-3 py-1">
-              Confirm Reject
-            </button>
+              onChange={e => setRejectNote(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleConfirmReject() }}
+              autoFocus
+            />
+            <div className="flex items-center gap-2 pt-0.5">
+              <button
+                type="button"
+                onClick={handleConfirmReject}
+                disabled={loading}
+                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2.5 rounded text-xs font-bold text-white bg-red-600 hover:bg-red-700 active:scale-95 transition-all touch-manipulation cursor-pointer shadow-md disabled:opacity-50">
+                <XCircle className="w-3.5 h-3.5" />
+                {loading ? 'Rejecting...' : 'Confirm Reject'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowReject(false)}
+                disabled={loading}
+                className="px-3.5 py-2.5 rounded text-xs font-medium text-cyber-muted hover:text-cyber-text border border-cyber-border hover:bg-cyber-surface2 transition-all touch-manipulation cursor-pointer">
+                Cancel
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -257,7 +291,7 @@ function FeedbackPanel({ sessionId, onSubmitted }) {
 export default function AgentInvestigation() {
   const { id }   = useParams()
   const navigate = useNavigate()
-  const { alert, loading: alertLoading } = useAlert(id)
+  const { alert, loading: alertLoading, error: alertError } = useAlert(id)
 
   const [running, setRunning]       = useState(false)
   const [sessions, setSessions]     = useState([])
@@ -266,6 +300,7 @@ export default function AgentInvestigation() {
   const [activeTab, setActiveTab]   = useState('report')
   const [loading, setLoading]       = useState(false)
   const [approving, setApproving]   = useState(false)
+  const autoRanRef                  = useRef(false)
 
   async function loadSessions() {
     setLoading(true)
@@ -273,22 +308,53 @@ export default function AgentInvestigation() {
       const data = await getAlertSessions(id)
       setSessions(data)
       if (data.length > 0) setActiveSession(data[0])
-    } catch {}
-    finally { setLoading(false) }
+      return data
+    } catch {
+      return []
+    } finally {
+      setLoading(false)
+    }
   }
 
-  useEffect(() => { if (id) loadSessions() }, [id])
-
   async function handleRun() {
-    setRunning(true); setError('')
+    setRunning(true)
+    setError('')
     try {
-      const result = await startSOCInvestigation(id)
+      await startSOCInvestigation(id)
       await loadSessions()
       setActiveTab('report')
     } catch (err) {
       setError(err?.response?.data?.detail ?? 'Investigation failed')
-    } finally { setRunning(false) }
+    } finally {
+      setRunning(false)
+    }
   }
+
+  // Automatic investigation: when page loads, if no sessions exist, auto-trigger the Agentic AI investigation!
+  useEffect(() => {
+    let mounted = true
+    async function init() {
+      if (!id) return
+      setLoading(true)
+      try {
+        const data = await getAlertSessions(id)
+        if (!mounted) return
+        setSessions(data)
+        if (data.length > 0) {
+          setActiveSession(data[0])
+        } else if (!autoRanRef.current) {
+          autoRanRef.current = true
+          handleRun()
+        }
+      } catch {
+        // error loading sessions
+      } finally {
+        if (mounted) setLoading(false)
+      }
+    }
+    init()
+    return () => { mounted = false }
+  }, [id])
 
   async function handleApprove(actionId) {
     setApproving(true)
@@ -302,8 +368,27 @@ export default function AgentInvestigation() {
     finally { setApproving(false) }
   }
 
-  if (alertLoading) return <div className="flex items-center justify-center h-full"><Spinner size="lg" /></div>
-  if (!alert) return null
+  if (alertLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full min-h-[400px] gap-3">
+        <Spinner size="lg" />
+        <p className="text-xs font-mono text-cyber-muted animate-pulse">Loading alert intelligence...</p>
+      </div>
+    )
+  }
+
+  if (alertError || !alert) {
+    return (
+      <div className="p-8 text-center max-w-md mx-auto my-12 panel">
+        <AlertTriangle className="w-10 h-10 mx-auto mb-3 text-red-500" />
+        <h2 className="text-base font-bold mb-1" style={{ color: 'var(--text)' }}>Alert Not Found</h2>
+        <p className="text-xs text-cyber-muted mb-4">{alertError || 'The requested alert could not be loaded.'}</p>
+        <button onClick={() => navigate('/alerts')} className="btn-primary text-xs py-2 px-4">
+          Back to Alerts
+        </button>
+      </div>
+    )
+  }
 
   const s = activeSession
   const report = s?.investigation_report

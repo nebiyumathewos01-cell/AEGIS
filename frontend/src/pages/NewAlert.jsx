@@ -111,7 +111,7 @@ export default function NewAlert() {
     setError(''); setSubmitting(true)
     try {
       const alert = await submitAlert({ raw_alert: rawAlert, source })
-      navigate(`/alerts/${alert.id}`)
+      navigate(`/agent/${alert.id}`)
     } catch (err) {
       setError(err?.response?.data?.detail ?? 'Submission failed')
     } finally { setSubmitting(false) }
@@ -123,7 +123,7 @@ export default function NewAlert() {
     setError(''); setSubmitting(true)
     try {
       const alert = await uploadAlertFile(file, source)
-      navigate(`/alerts/${alert.id}`)
+      navigate(`/agent/${alert.id}`)
     } catch (err) {
       setError(err?.response?.data?.detail ?? 'Upload failed')
     } finally { setSubmitting(false) }
@@ -133,7 +133,7 @@ export default function NewAlert() {
     setLoadingDemo(id); setError('')
     try {
       const result = await loadDemoScenario(id)
-      navigate(`/alerts/${result.alert_id}`)
+      navigate(`/agent/${result.alert_id}`)
     } catch (err) {
       setError(err?.response?.data?.detail ?? 'Failed to load scenario')
     } finally { setLoadingDemo(false) }

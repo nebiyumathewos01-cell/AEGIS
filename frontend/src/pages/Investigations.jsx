@@ -19,6 +19,9 @@ export default function Investigations() {
   const [actionLoading, setActionLoading] = useState(false)
   const [activeTab, setActiveTab] = useState('all')
 
+  const [rejectingId, setRejectingId] = useState(null)
+  const [rejectNote, setRejectNote] = useState('')
+
   async function loadApprovals() {
     setLoadingApprovals(true)
     try {
@@ -45,12 +48,13 @@ export default function Investigations() {
     }
   }
 
-  async function handleReject(actionId) {
-    const note = window.prompt('Enter reason for rejecting this action:')
-    if (!note || !note.trim()) return
+  async function handleConfirmReject(actionId) {
+    const note = rejectNote.trim() || 'Rejected by analyst'
     setActionLoading(true)
     try {
-      await rejectAgentAction(actionId, note.trim())
+      await rejectAgentAction(actionId, note)
+      setRejectingId(null)
+      setRejectNote('')
       await loadApprovals()
     } finally {
       setActionLoading(false)
@@ -129,38 +133,73 @@ export default function Investigations() {
                     {action.reasoning}
                   </p>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    onClick={() => handleApprove(action.id)}
-                    disabled={actionLoading}
-                    className="flex items-center gap-1 px-2.5 py-1.5 rounded font-medium transition-all"
-                    style={{
-                      background: 'rgba(0,212,170,0.15)',
-                      color: '#00d4aa',
-                      border: '1px solid rgba(0,212,170,0.4)',
-                    }}
-                  >
-                    <CheckCircle className="w-3.5 h-3.5" /> Approve
-                  </button>
-                  <button
-                    onClick={() => handleReject(action.id)}
-                    disabled={actionLoading}
-                    className="flex items-center gap-1 px-2.5 py-1.5 rounded font-medium transition-all"
-                    style={{
-                      background: 'rgba(255,34,68,0.12)',
-                      color: '#ff2244',
-                      border: '1px solid rgba(255,34,68,0.3)',
-                    }}
-                  >
-                    <XCircle className="w-3.5 h-3.5" /> Reject
-                  </button>
-                  <button
-                    onClick={() => navigate(`/agent/${action.session_id}`)}
-                    className="btn-ghost p-1.5"
-                    title="View Agent Session"
-                  >
-                    <Bot className="w-4 h-4" />
-                  </button>
+                <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 shrink-0">
+                  {rejectingId === action.id ? (
+                    <div className="flex flex-col gap-1.5 p-2 rounded bg-red-500/10 border border-red-500/30">
+                      <input
+                        type="text"
+                        className="input text-xs py-1 px-2 w-48"
+                        placeholder="Reason (optional)..."
+                        value={rejectNote}
+                        onChange={e => setRejectNote(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') handleConfirmReject(action.id) }}
+                        autoFocus
+                      />
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleConfirmReject(action.id)}
+                          disabled={actionLoading}
+                          className="flex items-center gap-1 px-3 py-1.5 rounded text-xs font-bold text-white bg-red-600 hover:bg-red-700 active:scale-95 touch-manipulation cursor-pointer">
+                          <XCircle className="w-3.5 h-3.5" /> Confirm
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setRejectingId(null); setRejectNote('') }}
+                          disabled={actionLoading}
+                          className="px-2 py-1.5 rounded text-xs text-cyber-muted hover:text-cyber-text border border-cyber-border touch-manipulation cursor-pointer">
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => handleApprove(action.id)}
+                        disabled={actionLoading}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded font-semibold text-xs touch-manipulation cursor-pointer transition-all hover:brightness-110 active:scale-95"
+                        style={{
+                          background: 'rgba(0,212,170,0.15)',
+                          color: '#00d4aa',
+                          border: '1px solid rgba(0,212,170,0.4)',
+                        }}
+                      >
+                        <CheckCircle className="w-3.5 h-3.5" /> Approve
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setRejectingId(action.id); setRejectNote('') }}
+                        disabled={actionLoading}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded font-semibold text-xs touch-manipulation cursor-pointer transition-all hover:brightness-110 active:scale-95"
+                        style={{
+                          background: 'rgba(255,34,68,0.12)',
+                          color: '#ff2244',
+                          border: '1px solid rgba(255,34,68,0.3)',
+                        }}
+                      >
+                        <XCircle className="w-3.5 h-3.5" /> Reject
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => navigate(action.alert_id ? `/agent/${action.alert_id}` : `/agent/${action.session_id}`)}
+                        className="btn-ghost p-1.5 touch-manipulation cursor-pointer"
+                        title="View Agent Session"
+                      >
+                        <Bot className="w-4 h-4" />
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             ))}
@@ -193,7 +232,7 @@ export default function Investigations() {
             <div
               key={a.id}
               className="card hover:border-cyber-accent/50 cursor-pointer transition-colors flex items-center gap-4"
-              onClick={() => navigate(`/alerts/${a.id}`)}
+              onClick={() => navigate(`/agent/${a.id}`)}
             >
               <BookOpen className="w-5 h-5 text-cyber-accent shrink-0" />
               <div className="flex-1 min-w-0">

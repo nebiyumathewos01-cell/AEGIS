@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, Plus, RefreshCw, Filter, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Search, Plus, RefreshCw, Filter, ChevronLeft, ChevronRight, Bot } from 'lucide-react'
 import { useAlerts } from '../hooks/useAlerts'
 import RiskBadge from '../components/RiskBadge'
 import StatusBadge from '../components/StatusBadge'
@@ -104,7 +104,7 @@ export default function Alerts() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-cyber-border bg-cyber-bg/50">
-                    {['#', 'Time', 'Source', 'Alert Type', 'Source IP', 'Score', 'Risk', 'Status'].map(h => (
+                    {['#', 'Time', 'Source', 'Alert Type', 'Source IP', 'Score', 'Risk', 'Status', 'Agent'].map(h => (
                       <th key={h} className="text-left text-xs text-cyber-muted font-semibold
                                              uppercase tracking-wide py-3 px-4 whitespace-nowrap">
                         {h}
@@ -114,7 +114,7 @@ export default function Alerts() {
                 </thead>
                 <tbody className="divide-y divide-cyber-border/30">
                   {data.items.map(a => (
-                    <tr key={a.id} onClick={() => navigate(`/alerts/${a.id}`)}
+                    <tr key={a.id} onClick={() => navigate(`/agent/${a.id}`)}
                       className="hover:bg-cyber-border/10 cursor-pointer transition-colors group">
                       <td className="py-3.5 px-4 font-mono text-xs text-cyber-muted group-hover:text-cyber-accent transition-colors">
                         #{a.id}
@@ -130,6 +130,16 @@ export default function Alerts() {
                       <td className="py-3.5 px-4 font-mono text-xs text-cyber-text">{Math.round(a.risk_score)}</td>
                       <td className="py-3.5 px-4"><RiskBadge level={a.risk_level} /></td>
                       <td className="py-3.5 px-4"><StatusBadge status={a.status} /></td>
+                      <td className="py-3.5 px-4" onClick={e => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/agent/${a.id}`)}
+                          className="flex items-center gap-1 text-[11px] px-2.5 py-1 rounded font-semibold transition-all touch-manipulation hover:brightness-110 active:scale-95"
+                          style={{ background: 'rgba(168,85,247,0.12)', color: '#a855f7', border: '1px solid rgba(168,85,247,0.3)' }}
+                          title="Open Agentic AI SOC Assistant">
+                          <Bot className="w-3 h-3" /> Agent
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

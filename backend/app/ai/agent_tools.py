@@ -114,7 +114,7 @@ async def lookup_threat_intelligence(ioc: str) -> dict:
             import re
             is_ip = bool(re.match(r"^\d+\.\d+\.\d+\.\d+$", ioc))
             endpoint = "ip_addresses" if is_ip else "domains"
-            async with httpx.AsyncClient(timeout=15.0) as client:
+            async with httpx.AsyncClient(timeout=3.0) as client:
                 resp = await client.get(
                     f"https://www.virustotal.com/api/v3/{endpoint}/{ioc}",
                     headers={"x-apikey": settings.virustotal_api_key},

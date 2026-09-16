@@ -38,7 +38,7 @@ class ApproveActionRequest(BaseModel):
 
 
 class RejectActionRequest(BaseModel):
-    analyst_note: str = Field(..., min_length=1, max_length=500)
+    analyst_note: str = Field(default="Rejected by analyst", max_length=500)
 
 
 class FeedbackRequest(BaseModel):
@@ -56,6 +56,7 @@ def _serialize_action(a: PendingAction) -> dict:
     return {
         "id":           a.id,
         "session_id":   a.session_id,
+        "alert_id":     a.session.alert_id if getattr(a, "session", None) else None,
         "action_type":  a.action_type,
         "action_label": a.action_label,
         "command":      a.command,
@@ -304,11 +305,12 @@ async def reject_action(
     if action.status != "pending":
         raise HTTPException(400, f"Action is already {action.status}")
 
+    note = (payload.analyst_note or "").strip() or "Rejected by analyst"
     action.status           = "rejected"
-    action.analyst_note     = payload.analyst_note
+    action.analyst_note     = note
     action.decided_by       = current_user.full_name
     action.decided_at       = datetime.now(timezone.utc)
-    action.execution_result = f"Action rejected by analyst {current_user.full_name}. Reason: {payload.analyst_note}. No changes applied."
+    action.execution_result = f"Action rejected by analyst {current_user.full_name}. Reason: {note}. No changes applied."
     db.flush()
 
     _update_session_phase(db, action.session_id)
@@ -316,12 +318,12 @@ async def reject_action(
         db, action.session_id,
         AuditEntryType=AuditEntryType.ANALYST_REJECTED.value,
         content=f"Analyst {current_user.full_name} REJECTED: '{action.action_label}'. "
-                f"Reason: {payload.analyst_note}.",
+                f"Reason: {note}.",
     )
 
     await log_action(
         db, user=current_user, action="STATUS_CHANGED",
-        detail=f"Rejected agent action: {action.action_label} — {payload.analyst_note}",
+        detail=f"Rejected agent action: {action.action_label} — {note}",
         request=request,
     )
 

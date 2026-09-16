@@ -193,7 +193,7 @@ def _handle_private_ip(ioc: str) -> dict:
 async def _live_open_ip_lookup(ioc: str) -> dict:
     """Live open-source intelligence lookup via IP-API."""
     try:
-        async with httpx.AsyncClient(timeout=4.0) as client:
+        async with httpx.AsyncClient(timeout=2.5) as client:
             resp = await client.get(
                 f"http://ip-api.com/json/{ioc}?fields=status,message,country,countryCode,regionName,city,isp,org,as,query"
             )

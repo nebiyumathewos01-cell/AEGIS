@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, Cpu, FileText, Shield, AlertTriangle,
@@ -10,7 +10,7 @@ import RiskScoreBar from '../components/RiskScoreBar'
 import StatusBadge from '../components/StatusBadge'
 import Spinner from '../components/Spinner'
 import PlaybookPanel from '../components/PlaybookPanel'
-import { analyzeAlert, updateAlertStatus, addNote } from '../services/api'
+import { getAlertSessions, updateAlertStatus, addNote } from '../services/api'
 import { fmtDate } from '../utils/format'
 import { formatAlertType, riskColor } from '../utils/risk'
 
@@ -49,20 +49,18 @@ export default function AlertDetail() {
   const navigate = useNavigate()
   const { alert, loading, error, refresh } = useAlert(id)
 
-  const [analyzing, setAnalyzing]           = useState(false)
+  const [agentSession, setAgentSession]     = useState(null)
   const [noteText, setNoteText]             = useState('')
   const [submittingNote, setSubmittingNote] = useState(false)
   const [statusChanging, setStatusChanging] = useState(false)
 
-  async function handleAnalyze() {
-    setAnalyzing(true)
-    try {
-      await analyzeAlert(id)
-      await refresh()
-    } finally {
-      setAnalyzing(false)
+  useEffect(() => {
+    if (id) {
+      getAlertSessions(id).then(sessions => {
+        if (sessions && sessions.length > 0) setAgentSession(sessions[0])
+      }).catch(() => {})
     }
-  }
+  }, [id])
 
   async function handleStatus(newStatus) {
     setStatusChanging(true)
@@ -123,15 +121,10 @@ export default function AlertDetail() {
             onClick={() => navigate(`/reports/${id}`)}>
             <Download className="w-3.5 h-3.5" /> Report
           </button>
-          <button className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded font-semibold transition-all"
-            onClick={() => navigate(`/agent/${id}`)}
-            style={{ background: 'rgba(168,85,247,0.12)', color: '#a855f7', border: '1px solid rgba(168,85,247,0.3)' }}>
-            <Bot className="w-3.5 h-3.5" /> Agent
-          </button>
-          <button className="btn-primary flex items-center gap-2 text-xs"
-            onClick={handleAnalyze} disabled={analyzing}>
-            {analyzing ? <Spinner size="sm" /> : <Cpu className="w-4 h-4" />}
-            {analysis ? 'Re-Analyze' : 'Analyze'}
+          <button className="btn-primary flex items-center gap-2 text-xs py-2 px-3.5 font-semibold shadow-md"
+            onClick={() => navigate(`/agent/${id}`)}>
+            <Bot className="w-4 h-4" />
+            {agentSession ? 'Open Agent Workspace' : 'Launch Agent Investigation'}
           </button>
         </div>
       </div>
@@ -184,58 +177,91 @@ export default function AlertDetail() {
             </Section>
           )}
 
-          {/* AI Analysis */}
-          <Section icon={Cpu}
-            title={`AI Analysis${analysis
-              ? ` · ${analysis.is_ai_generated ? analysis.ai_model : 'Rule-Based'}`
-              : ''}`}>
-            {analysis ? (
+          {/* Agentic AI SOC Investigation */}
+          <Section icon={Bot} title="Agentic AI SOC Investigation">
+            {agentSession ? (
               <div className="space-y-4">
-                <div>
-                  <p className="text-xs mb-1" style={{ color: 'var(--muted)' }}>Summary</p>
-                  <p className="text-sm" style={{ color: 'var(--text)' }}>{analysis.summary}</p>
-                </div>
-                <div>
-                  <p className="text-xs mb-1" style={{ color: 'var(--muted)' }}>Threat Interpretation</p>
-                  <p className="text-sm leading-relaxed" style={{ color: 'var(--text)' }}>
-                    {analysis.threat_interpretation}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs mb-1" style={{ color: 'var(--muted)' }}>Confirmed Evidence</p>
-                  <pre className="text-xs font-mono rounded p-3 whitespace-pre-wrap leading-relaxed"
-                    style={{ background: 'var(--bg)', color: 'var(--text)', border: '1px solid var(--border)' }}>
-                    {analysis.evidence}
-                  </pre>
-                </div>
-                <div>
-                  <p className="text-xs mb-1" style={{ color: 'var(--muted)' }}>Risk Explanation</p>
-                  <p className="text-sm" style={{ color: 'var(--text)' }}>{analysis.risk_explanation}</p>
-                </div>
-                {analysis.recommendations && analysis.recommendations.length > 0 && (
+                <div className="flex items-center justify-between p-3 rounded"
+                  style={{ background: 'var(--surface2)', border: '1px solid var(--border)' }}>
                   <div>
-                    <p className="text-xs mb-2" style={{ color: 'var(--muted)' }}>
-                      Recommended Investigation Steps
-                    </p>
-                    <ol className="space-y-1.5">
-                      {analysis.recommendations.map((r, i) => (
-                        <li key={i} className="flex gap-2.5 text-sm">
-                          <span className="font-mono text-xs mt-0.5 shrink-0 font-bold"
-                            style={{ color: 'var(--accent)' }}>{i + 1}.</span>
-                          <span style={{ color: 'var(--text)' }}>{r}</span>
-                        </li>
-                      ))}
-                    </ol>
+                    <span className="text-[10px] font-bold uppercase tracking-wider block mb-0.5" style={{ color: 'var(--muted)' }}>
+                      Agent Verdict
+                    </span>
+                    <span className="text-sm font-bold" style={{ color: 'var(--text)' }}>
+                      {agentSession.verdict || 'Investigation Complete'}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[10px] font-bold uppercase tracking-wider block mb-0.5" style={{ color: 'var(--muted)' }}>
+                      Confidence
+                    </span>
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded"
+                      style={{
+                        background: agentSession.confidence_label === 'HIGH' ? 'rgba(0,212,170,0.15)' : 'rgba(245,158,11,0.15)',
+                        color: agentSession.confidence_label === 'HIGH' ? '#00d4aa' : '#f59e0b',
+                      }}>
+                      {agentSession.confidence_label} ({agentSession.confidence_score}%)
+                    </span>
+                  </div>
+                </div>
+
+                {agentSession.evidence_summary && (
+                  <div>
+                    <p className="text-xs mb-1.5 font-semibold" style={{ color: 'var(--muted)' }}>Autonomous Evidence Summary</p>
+                    <div className="p-3 rounded text-xs font-mono leading-relaxed whitespace-pre-line"
+                      style={{ background: 'var(--bg)', color: 'var(--text)', border: '1px solid var(--border)' }}>
+                      {agentSession.evidence_summary}
+                    </div>
                   </div>
                 )}
+
+                {agentSession.pending_actions && agentSession.pending_actions.length > 0 && (
+                  <div>
+                    <p className="text-xs mb-1.5 font-semibold" style={{ color: 'var(--muted)' }}>
+                      Proposed Safe Actions ({agentSession.pending_actions.length})
+                    </p>
+                    <div className="space-y-2">
+                      {agentSession.pending_actions.map(act => (
+                        <div key={act.id} className="p-2.5 rounded flex items-center justify-between text-xs"
+                          style={{ background: 'var(--surface2)', border: '1px solid var(--border)' }}>
+                          <div>
+                            <span className="font-semibold" style={{ color: 'var(--text)' }}>{act.action_label}</span>
+                            <p className="text-[11px]" style={{ color: 'var(--muted)' }}>{act.reasoning}</p>
+                          </div>
+                          <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded font-bold"
+                            style={{
+                              background: act.status === 'approved' ? 'rgba(0,212,170,0.15)' : act.status === 'rejected' ? 'rgba(255,34,68,0.15)' : 'rgba(245,158,11,0.15)',
+                              color: act.status === 'approved' ? '#00d4aa' : act.status === 'rejected' ? '#ff2244' : '#f59e0b',
+                            }}>
+                            {act.status}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/agent/${id}`)}
+                    className="btn-primary w-full flex items-center justify-center gap-2 text-xs py-2.5 shadow">
+                    <Bot className="w-4 h-4" /> Open Full Agent Workspace & Complete Audit Trail
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="text-center py-8">
-                <Cpu className="w-7 h-7 mx-auto mb-2" style={{ color: 'var(--muted)' }} />
-                <p className="text-sm mb-1" style={{ color: 'var(--muted)' }}>No analysis yet.</p>
-                <button className="btn-primary text-xs mt-2"
-                  onClick={handleAnalyze} disabled={analyzing}>
-                  {analyzing ? 'Analyzing…' : 'Run AI Analysis'}
+                <Bot className="w-8 h-8 mx-auto mb-2" style={{ color: 'var(--accent)' }} />
+                <p className="text-sm font-medium mb-1" style={{ color: 'var(--text)' }}>Autonomous Agentic Investigation</p>
+                <p className="text-xs mb-4 max-w-md mx-auto" style={{ color: 'var(--muted)' }}>
+                  The Agentic AI SOC Assistant correlates related alerts, queries threat intelligence, traces event timelines, and verifies CVE vulnerabilities.
+                </p>
+                <button
+                  type="button"
+                  className="btn-primary text-xs py-2.5 px-5 flex items-center gap-2 mx-auto"
+                  onClick={() => navigate(`/agent/${id}`)}>
+                  <Bot className="w-4 h-4" /> Launch Autonomous Agentic AI Investigation
                 </button>
               </div>
             )}
