@@ -9,6 +9,7 @@ Flow:
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import secrets
 from datetime import datetime, timezone
@@ -20,12 +21,15 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user
 from app.database import get_db
 from app.models.api_key import ApiKey
+from app.models.environment_profile import EnvironmentProfile
+from app.models.playbook import Playbook
 from app.models.user import User
 from app.parsers import parse_alert
 from app.rules import RuleEngine
 from app.ai import AIAnalyzer
 from app.schemas.alert import AlertCreate
 from app.services.alert_service import create_alert, save_analysis
+from app.services.playbook_service import generate_playbook
 
 router = APIRouter(tags=["integrations"])
 _rule_engine = RuleEngine()
@@ -178,12 +182,18 @@ async def webhook_ingest(
 
     analysis_result = None
 
+    # Load owner's environment profile to personalize analysis and playbooks
+    profile_obj = db.query(EnvironmentProfile).filter(
+        EnvironmentProfile.owner_id == owner.id
+    ).first()
+    env_context = profile_obj.to_context_string() if profile_obj else ""
+
     # Auto-analyze if requested
     if payload.auto_analyze:
         try:
             parsed = parse_alert(alert.raw_alert, source_hint=alert.source)
             rule_result = _rule_engine.analyze(parsed)
-            ai_result = await _ai_analyzer.analyze(parsed, rule_result)
+            ai_result = await _ai_analyzer.analyze(parsed, rule_result, env_context=env_context)
             analysis = save_analysis(
                 db, alert_id=alert.id, owner_id=owner.id,
                 summary=ai_result.summary,
@@ -200,6 +210,35 @@ async def webhook_ingest(
                 "risk_score": alert.risk_score,
                 "ai_model": analysis.ai_model,
             }
+
+            # Automatically generate response playbook tailored to this environment
+            profile_dict = {
+                "cloud": profile_obj.cloud or "",
+                "os": profile_obj.os or "",
+                "firewall": profile_obj.firewall or "",
+                "ids_ips": profile_obj.ids_ips or "",
+                "web_server": profile_obj.web_server or "",
+                "app_framework": profile_obj.app_framework or "",
+                "database": profile_obj.database or "",
+            } if profile_obj else {}
+
+            steps = generate_playbook(
+                alert_type=alert.alert_type,
+                source_ip=alert.source_ip,
+                username=alert.username,
+                risk_level=alert.risk_level,
+                profile=profile_dict,
+            )
+            db.query(Playbook).filter(Playbook.alert_id == alert.id).delete()
+            pb = Playbook(
+                alert_id=alert.id,
+                owner_id=owner.id,
+                threat_type=alert.alert_type,
+                steps=json.dumps(steps),
+                status="pending",
+            )
+            db.add(pb)
+            db.flush()
         except Exception:
             pass  # analysis failure doesn't block alert creation
 
@@ -209,6 +248,7 @@ async def webhook_ingest(
         "risk_level": alert.risk_level,
         "risk_score": alert.risk_score,
         "source": alert.source,
+        "environment": env_context or "default",
         "analysis": analysis_result,
         "dashboard_url": f"/alerts/{alert.id}",
     }

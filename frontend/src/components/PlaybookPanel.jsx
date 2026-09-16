@@ -3,7 +3,7 @@ import {
   Shield, CheckCircle, XCircle, Clock, Play,
   ChevronDown, ChevronUp, Terminal, AlertTriangle
 } from 'lucide-react'
-import { generatePlaybook, getPlaybook, updatePlaybookStep } from '../services/api'
+import { generatePlaybook, getPlaybook, updatePlaybookStep, getEnvironmentProfile } from '../services/api'
 import Spinner from './Spinner'
 
 const RISK_COLORS = {
@@ -109,12 +109,17 @@ export default function PlaybookPanel({ alertId }) {
   const [loading, setLoading]   = useState(false)
   const [generating, setGenerating] = useState(false)
   const [error, setError]       = useState('')
+  const [envProfile, setEnvProfile] = useState(null)
 
   useEffect(() => {
     // Try to load existing playbook
     getPlaybook(alertId)
       .then(setPlaybook)
       .catch(() => {}) // 404 means not generated yet
+
+    getEnvironmentProfile()
+      .then(setEnvProfile)
+      .catch(() => {})
   }, [alertId])
 
   async function handleGenerate() {
@@ -191,6 +196,21 @@ export default function PlaybookPanel({ alertId }) {
 
       {playbook && (
         <>
+          {/* Target environment banner */}
+          <div className="flex items-center justify-between mb-3 px-3 py-2 rounded text-xs"
+            style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full" style={{ background: 'var(--accent)' }} />
+              <span style={{ color: 'var(--muted)' }}>Target Environment:</span>
+              <span className="font-semibold" style={{ color: 'var(--accent)' }}>
+                {envProfile?.cloud || 'Linux Server'} · {envProfile?.firewall || 'iptables'}
+              </span>
+            </div>
+            <span className="text-[10px] font-mono hidden sm:inline" style={{ color: 'var(--muted)' }}>
+              Commands tailored to your stack
+            </span>
+          </div>
+
           {/* Approval notice */}
           <div className="flex items-start gap-2 mb-4 p-3 rounded text-xs"
             style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)', borderLeft: '3px solid #f59e0b' }}>

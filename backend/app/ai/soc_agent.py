@@ -319,6 +319,18 @@ class SOCAgent:
             f"Phase 1: Autonomous evidence collection (read-only)."
         )
 
+        # Load environment profile to adapt agent proposals
+        from app.models.environment_profile import EnvironmentProfile
+        self.env_profile = self.db.query(EnvironmentProfile).filter(
+            EnvironmentProfile.owner_id == self.owner_id
+        ).first()
+        env_desc = self.env_profile.to_context_string() if self.env_profile else "Default Linux"
+        self._audit(
+            AuditEntryType.REASONING,
+            f"Active Environment Profile recognized: {env_desc}. "
+            f"Remediation actions and command templates will be customized to this environment."
+        )
+
         # ── Phase 1: Investigation loop ──────────────────────────────────
         proposed_actions: list[ProposedAction] = []
         tool_results: list[dict] = []
@@ -621,17 +633,43 @@ class SOCAgent:
             risk_level="low",
         ))
 
+        # Determine environment commands
+        cloud = ((getattr(self.env_profile, "cloud", "") or "")).lower()
+        firewall = ((getattr(self.env_profile, "firewall", "") or "")).lower()
+        env_lower = f"{cloud} {firewall}"
+
+        if "aws" in env_lower:
+            block_cmd = f"aws ec2 authorize-security-group-ingress --group-id <sg-id> --protocol all --cidr {source_ip}/32 --description 'AEGIS Block'"
+            lock_cmd = f"# AWS IAM / Identity: aws iam update-login-profile --user-name {username} --password-reset-required"
+            rate_cmd = "aws wafv2 create-rate-based-rule --name aegis-rate-limit --rate-limit 100"
+            fw_label = "AWS Security Group"
+        elif "azure" in env_lower:
+            block_cmd = f"az network nsg rule create --nsg-name <nsg> --name AEGISBlock --priority 100 --source-address-prefixes {source_ip}"
+            lock_cmd = f"# Azure AD / Entra ID: Disable-AzADUser -UserPrincipalName {username}"
+            rate_cmd = "# Azure Front Door / App Gateway: Configure WAF rate limiting"
+            fw_label = "Azure NSG"
+        elif "windows" in env_lower:
+            block_cmd = f"netsh advfirewall firewall add rule name='AEGIS Block' dir=in action=block remoteip={source_ip}"
+            lock_cmd = f"Disable-ADAccount -Identity {username}"
+            rate_cmd = "# Windows Server: Configure IIS Dynamic IP Restrictions"
+            fw_label = "Windows Defender Firewall"
+        else:
+            block_cmd = f"sudo iptables -A INPUT -s {source_ip} -j DROP && sudo iptables-save"
+            lock_cmd = f"sudo passwd -l {username}"
+            rate_cmd = f"fail2ban-client set sshd banip {source_ip or '<ip>'}"
+            fw_label = "iptables firewall"
+
         # Block IP if confirmed malicious or high risk + related alerts
         if source_ip and (ti.get("malicious_count", 0) >= 3 or
                           (risk_score >= 70 and related >= 2)):
             actions.append(ProposedAction(
                 action_type=ActionType.BLOCK_IP,
-                action_label=f"Block {source_ip} at firewall",
+                action_label=f"Block {source_ip} at {fw_label}",
                 reasoning=(
                     f"IP {source_ip} has {ti.get('malicious_count', 0)} threat intel detections "
                     f"and {related} related alerts. Blocking recommended to stop ongoing activity."
                 ),
-                command=f"iptables -A INPUT -s {source_ip} -j DROP  # or equivalent for your firewall",
+                command=block_cmd,
                 action_data={"ip": source_ip},
                 requires_approval=True,
                 risk_level="low",
@@ -646,7 +684,7 @@ class SOCAgent:
                     f"Brute force pattern detected ({alert_data.get('attempt_count', 0)} attempts). "
                     f"Rate limiting will slow future attempts."
                 ),
-                command="fail2ban-client set sshd banip " + (source_ip or "<ip>"),
+                command=rate_cmd,
                 requires_approval=True,
                 risk_level="low",
             ))
@@ -661,7 +699,7 @@ class SOCAgent:
                         f"Privileged account '{username}' is under attack. "
                         f"Temporary lock prevents unauthorized access during investigation."
                     ),
-                    command=f"passwd -l {username}  # Linux or equivalent",
+                    command=lock_cmd,
                     action_data={"username": username},
                     requires_approval=True,
                     risk_level="medium",

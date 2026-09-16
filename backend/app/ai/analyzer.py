@@ -255,10 +255,27 @@ class AIAnalyzer:
             "Escalate to a senior analyst if the alert cannot be dismissed.",
         ])
 
+        # Apply concrete environment-specific mitigation commands based on profile
         if env_context and env_context != "No environment profile configured":
-            recs.append(
-                f"Apply environment-specific hardening based on your stack: {env_context[:120]}"
-            )
+            env_lower = env_context.lower()
+            if "aws" in env_lower:
+                recs.append(f"AWS Mitigation: Block {src} in Security Groups: aws ec2 authorize-security-group-ingress --group-id <sg-id> --cidr {src}/32 --protocol all")
+                recs.append("AWS Hardening: Enable AWS WAF rate-based rule to restrict repeat connection attempts.")
+            elif "azure" in env_lower:
+                recs.append(f"Azure Mitigation: Block {src} in Network Security Group: az network nsg rule create --nsg-name <nsg> --priority 100 --source-address-prefixes {src}")
+            elif "windows" in env_lower:
+                recs.append(f"Windows Firewall: Block {src} via cmd: netsh advfirewall firewall add rule name='AEGIS Block' dir=in action=block remoteip={src}")
+                if parsed.username:
+                    recs.append(f"Active Directory Action: Disable targeted account: Disable-ADAccount -Identity {parsed.username}")
+            else:  # Default / Linux
+                recs.append(f"Linux Firewall: Block {src} immediately via iptables: sudo iptables -A INPUT -s {src} -j DROP")
+                if parsed.username:
+                    recs.append(f"Host Action: Lock account password on Linux: sudo passwd -l {parsed.username}")
+
+            if "nginx" in env_lower:
+                recs.append("Nginx Hardening: Add connection rate-limiting: limit_conn_zone $binary_remote_addr zone=addr:10m; limit_conn addr 10;")
+            elif "apache" in env_lower:
+                recs.append("Apache Hardening: Enable mod_evasive or mod_qos to drop aggressive request floods.")
 
         # Summaries per language
         summary_en = (
