@@ -408,7 +408,7 @@ export default function AgentInvestigation() {
   }
 
   const s = activeSession
-  const report = s?.investigation_report
+  const report = s?.investigation_report || {}
   const trail  = s?.audit_trail || []
   const actions = s?.pending_actions || []
   const pendingCount = actions.filter(a => a.status === 'pending').length
@@ -439,7 +439,7 @@ export default function AgentInvestigation() {
           <button onClick={loadSessions} className="btn-ghost p-2" title="Refresh"><RefreshCw className="w-4 h-4" /></button>
 
           {/* Direct Download Report Button (when session has a report) */}
-          {report && (
+          {s?.investigation_report && (
             <button
               type="button"
               onClick={handleDownloadReport}
@@ -813,3 +813,5 @@ export default function AgentInvestigation() {
     </div>
   )
 }
+
+
