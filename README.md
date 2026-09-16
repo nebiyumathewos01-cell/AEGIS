@@ -61,7 +61,7 @@ AEGIS introduces a **Dual-Engine Architecture**:
            │
            ▼
   ┌─────────────────────────────────┐
-  │ 6. Feedback & Audit Loop        │ ◄── Immutable audit trail & analyst feedback memory
+  │ 6. Feedback, Closure & Export   │ ◄── Immutable audit trail, feedback loop & PDF/MD/JSON report export
   └─────────────────────────────────┘
 ```
 
@@ -72,7 +72,8 @@ AEGIS introduces a **Dual-Engine Architecture**:
 
 ## ⚡ Key Features
 
-- **Autonomous Multi-Step Investigation**: The AI agent independently decides what to query based on findings. If an IP appears suspicious, it queries threat feeds, cross-references recent alerts from the same subnet, constructs an attack timeline, and calculates context-adjusted risk.
+- **Deterministic Rule Engine Sole Authority**: Risk scoring (0–100) is strictly and deterministically computed by AEGIS's heuristic `RuleEngine`. The Agentic AI does **not** alter, drift, or hallucinate the baseline risk score—its focus is purely autonomous multi-turn evidence gathering, correlation, timeline sequencing, and safe action proposals.
+- **Autonomous Multi-Step Investigation**: The AI agent independently decides what to query based on findings. If an IP appears suspicious, it queries threat feeds, cross-references recent alerts from the same subnet, constructs an attack timeline, and matches known CVE vulnerabilities.
 - **Strict Guardrail Boundaries**:
   - **Read-Only Tools**: Can run autonomously (threat intel lookups, alert correlation, timeline reconstruction).
   - **State-Modifying Actions**: Require explicit human approval (host isolation, IP blocking, credential revocation).
@@ -89,6 +90,10 @@ AEGIS introduces a **Dual-Engine Architecture**:
   - AWS CloudTrail JSON events (`AttachUserPolicy`, `CreateAccessKey`, unauthorized IAM calls)
 - **Live Threat Intelligence Engine**: Real-time IP geolocation, ISP/ASN lookup, curated threat actor attribution, Tor exit node detection, and RFC-1918 private network identification.
 - **Tamper-Evident Audit Trail**: Every tool invocation, reasoning step, analyst approval/rejection timestamp, and remediation outcome is permanently recorded with complete telemetry.
+- **1-Click Forensic Incident Report Exports**: Once an investigation completes, analysts can immediately download:
+  - **Executive PDF Report**: Multi-page report with cover brief, deterministic rule breakdown, confirmed evidence, CVEs, HITL decisions, and audit trail.
+  - **Markdown Dossier (`.md`)**: GitHub-flavored format ready for pasting into Jira tickets, ServiceNow incidents, or Slack war rooms.
+  - **Machine Telemetry (`.json`)**: Raw export formatted for SIEM / SOAR pipeline archival.
 
 ---
 

@@ -133,6 +133,10 @@ export default function Docs() {
                 <CheckCircle2 className="w-4 h-4 text-cyber-teal shrink-0 mt-0.5" />
                 <span><strong className="text-cyber-text">Full Auditability & Compliance</strong>: Every reasoning step, tool query, approval note, and response output is immutably logged in UTC for SOC 2 and ISO 27001 audits.</span>
               </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle2 className="w-4 h-4 text-cyber-teal shrink-0 mt-0.5" />
+                <span><strong className="text-cyber-text">Multi-Format Incident Reporting</strong>: Instant 1-click generation of comprehensive Executive PDF reports, Markdown documentation (for Jira/Confluence/Slack), and raw JSON telemetry upon investigation completion.</span>
+              </li>
             </ul>
           </div>
         </div>
@@ -144,10 +148,10 @@ export default function Docs() {
           <div className="card">
             <h2 className="text-base font-bold text-cyber-text mb-2">The 6-Stage Core Lifecycle</h2>
             <p className="text-xs text-cyber-muted mb-4">
-              AEGIS governs the entire alert journey from raw log ingestion to verified remediation and continuous feedback:
+              AEGIS governs the entire alert journey from raw log ingestion to verified remediation, continuous feedback, and formal incident documentation:
             </p>
             <div className="p-3 rounded bg-cyber-bg border border-cyber-border font-mono text-xs text-cyber-accent text-center mb-6 overflow-x-auto">
-              Raw Alert → Agent Loop → Guardrails → Human Approval → Safe Response → Feedback Loop
+              Raw Alert → Agent Loop → Guardrails → Human Approval → Safe Response → Feedback & Report Export
             </div>
 
             <div className="space-y-4">
@@ -184,9 +188,9 @@ export default function Docs() {
                 },
                 {
                   num: '06',
-                  title: 'Feedback Loop & Calibration',
+                  title: 'Feedback Loop & Report Export',
                   color: '#a855f7',
-                  desc: 'The analyst rates investigation accuracy (1–5 stars, false-positive marker, comments). The loop closes, updating session status to completed and feeding accuracy analytics.'
+                  desc: 'The analyst rates investigation accuracy (1–5 stars, false-positive marker, comments) to close the lifecycle. Analysts can immediately export the complete investigation as an official Executive PDF report, Markdown for ticketing systems (Jira/ServiceNow), or structured JSON.'
                 },
               ].map(step => (
                 <div key={step.num} className="p-4 rounded border border-cyber-border bg-cyber-surface2 flex gap-4 items-start">
@@ -199,6 +203,37 @@ export default function Docs() {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* Report Export Architecture Card */}
+          <div className="card">
+            <h3 className="text-sm font-bold text-cyber-text mb-2 flex items-center gap-2">
+              <BookOpen className="w-4 h-4 text-cyber-accent" />
+              Incident Report & Compliance Export Formats
+            </h3>
+            <p className="text-xs text-cyber-muted mb-4 leading-relaxed">
+              Once the Agentic AI concludes its multi-turn investigation, analysts can download a comprehensive, courtroom-ready forensic dossier in three distinct formats:
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="p-3 rounded border border-cyber-border bg-cyber-surface2">
+                <p className="text-xs font-bold text-cyber-accent mb-1">Executive PDF Report</p>
+                <p className="text-[11px] text-cyber-muted leading-relaxed">
+                  Professional multi-page PDF featuring executive verdict, deterministic RuleEngine baseline, MITRE factors, CVE analysis, human approval records, and full audit logs.
+                </p>
+              </div>
+              <div className="p-3 rounded border border-cyber-border bg-cyber-surface2">
+                <p className="text-xs font-bold text-cyber-teal mb-1">Markdown Dossier (.md)</p>
+                <p className="text-[11px] text-cyber-muted leading-relaxed">
+                  GitHub-flavored markdown formatted for instant pasting into Jira tickets, ServiceNow incidents, Slack war rooms, or internal security wikis.
+                </p>
+              </div>
+              <div className="p-3 rounded border border-cyber-border bg-cyber-surface2">
+                <p className="text-xs font-bold text-purple-400 mb-1">Machine Telemetry (.json)</p>
+                <p className="text-[11px] text-cyber-muted leading-relaxed">
+                  Raw JSON telemetry containing the complete agent session, tool parameters, raw audit events, and analyst approval metadata for SIEM / SOAR pipeline ingestion.
+                </p>
+              </div>
             </div>
           </div>
         </div>
