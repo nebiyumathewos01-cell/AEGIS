@@ -140,22 +140,36 @@ export default function ThreatIntelligence() {
       )}
 
       {/* Quick lookups */}
-      {!result && !loading && (
-        <div className="card">
-          <p className="section-title">Quick Test IPs</p>
-          <div className="flex flex-wrap gap-2">
-            {['192.168.1.50', '10.0.0.1', '185.220.101.47', '203.0.113.12'].map(ip => (
-              <button
-                key={ip}
-                className="font-mono text-xs px-3 py-1.5 border border-cyber-border rounded hover:border-cyber-accent text-cyber-muted hover:text-cyber-accent transition-colors"
-                onClick={() => { setIoc(ip) }}
-              >
-                {ip}
-              </button>
-            ))}
-          </div>
+      <div className="card mt-6">
+        <p className="section-title mb-2">Preset Security Test IPs</p>
+        <p className="text-xs text-cyber-muted mb-3">
+          Click any preset to test threat intelligence detection for different threat classifications:
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { ip: '185.220.101.47', label: '185.220.101.47 (Tor Node · High Risk)', color: '#ff2244' },
+            { ip: '141.98.11.11',   label: '141.98.11.11 (Cobalt Strike C2 · Critical)', color: '#ff2244' },
+            { ip: '198.51.100.45',  label: '198.51.100.45 (SSH Botnet · High)', color: '#f59e0b' },
+            { ip: '203.0.113.12',   label: '203.0.113.12 (Vulnerability Scanner)', color: '#f59e0b' },
+            { ip: '8.8.8.8',        label: '8.8.8.8 (Google DNS · Clean)', color: '#00d4aa' },
+            { ip: '192.168.1.50',   label: '192.168.1.50 (Internal Private Network)', color: '#00d4aa' },
+          ].map(({ ip, label, color }) => (
+            <button
+              key={ip}
+              className="font-mono text-xs px-3 py-1.5 border rounded transition-all flex items-center gap-1.5"
+              style={{
+                background: 'var(--surface2)',
+                borderColor: 'var(--border)',
+                color: 'var(--text)',
+              }}
+              onClick={() => { setIoc(ip); }}
+            >
+              <span className="w-2 h-2 rounded-full" style={{ background: color }} />
+              {label}
+            </button>
+          ))}
         </div>
-      )}
+      </div>
     </div>
   )
 }

@@ -147,21 +147,67 @@ async def lookup_threat_intelligence(ioc: str) -> dict:
         except Exception:
             pass
 
-    # Demo/fallback data
-    private_ranges = ["192.168.", "10.", "172.16.", "172.17.", "172.18.",
-                      "172.19.", "172.2", "127.", "::1", "localhost"]
-    is_private = any(ioc.startswith(p) for p in private_ranges)
+    # 2. Check curated AEGIS threat intelligence feeds
+    import ipaddress
+    from app.api.threat_intelligence import _KNOWN_THREATS, _handle_private_ip, _live_open_ip_lookup
 
-    if is_private:
-        data = {"ioc": ioc, "malicious_count": 0, "reputation": "Private",
-                "source": "local", "note": "Private/internal IP — not in public threat feeds"}
-        summary = f"{ioc} is a private/internal IP address — not routable on the public internet."
+    if ioc in _KNOWN_THREATS:
+        known = _KNOWN_THREATS[ioc]
+        mal = known.get("malicious_count", 0)
+        ti_data = {
+            "ioc": ioc,
+            "malicious_count": mal,
+            "suspicious_count": known.get("suspicious_count", 0),
+            "country": known.get("country", "Unknown"),
+            "asn_owner": known.get("owner", "Unknown"),
+            "reputation": known.get("reputation", 0),
+            "source": known.get("source", "AEGIS Threat Intelligence"),
+            "tags": known.get("tags", []),
+        }
+        if mal >= 10:
+            summary = f"CRITICAL THREAT: {ioc} flagged by {mal} threat intelligence feeds ({known.get('owner')})."
+        elif mal > 0:
+            summary = f"THREAT DETECTED: {ioc} flagged with {mal} malicious detections ({known.get('owner')})."
+        else:
+            summary = f"CLEAN: {ioc} ({known.get('owner')}) — no threat indicators detected."
+        return tool_result("threat_intelligence", ti_data, summary)
+
+    # 3. Check for private RFC-1918 / Loopback
+    try:
+        if ipaddress.ip_address(ioc).is_private:
+            priv = _handle_private_ip(ioc)
+            ti_data = {
+                "ioc": ioc,
+                "malicious_count": 0,
+                "suspicious_count": 0,
+                "country": priv["country"],
+                "asn_owner": priv["owner"],
+                "reputation": priv["reputation"],
+                "source": priv["source"],
+            }
+            return tool_result("threat_intelligence", ti_data, f"{ioc} is a private RFC-1918 internal IP address.")
+    except ValueError:
+        pass
+
+    # 4. Live open IP intelligence lookup
+    live = await _live_open_ip_lookup(ioc)
+    mal = live.get("malicious_count", 0)
+    ti_data = {
+        "ioc": ioc,
+        "malicious_count": mal,
+        "suspicious_count": live.get("suspicious_count", 0),
+        "country": live.get("country", "Public Internet"),
+        "asn_owner": live.get("owner", "Public Network"),
+        "reputation": live.get("reputation", 50),
+        "source": live.get("source", "AEGIS Live Threat Intelligence"),
+    }
+    if mal >= 10:
+        summary = f"THREAT CONFIRMED: {ioc} flagged by {mal} intelligence indicators ({live.get('owner')})."
+    elif mal > 0:
+        summary = f"SUSPICIOUS: {ioc} flagged with {mal} suspicious indicators ({live.get('owner')})."
     else:
-        data = {"ioc": ioc, "malicious_count": 0,
-                "source": "demo", "note": "No VirusTotal API key configured"}
-        summary = f"No threat intelligence available for {ioc} — configure VirusTotal API key for live data."
-
-    return tool_result("threat_intelligence", data, summary)
+        summary = f"ENRICHED: {ioc} located in {live.get('country')}, ISP: {live.get('owner')}. No active malicious telemetry."
+    return tool_result("threat_intelligence", ti_data, summary)
 
 
 # ── Tool 3: Deep risk re-evaluation ──────────────────────────────────────────
