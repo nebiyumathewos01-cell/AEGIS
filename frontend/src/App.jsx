@@ -19,6 +19,7 @@ import AdminPanel from './pages/AdminPanel'
 import SettingsPage from './pages/Settings'
 import AgentInvestigation from './pages/AgentInvestigation'
 import EnvironmentProfile from './pages/EnvironmentProfile'
+import Docs from './pages/Docs'
 
 export default function App() {
   return (
@@ -44,6 +45,7 @@ export default function App() {
             <Route path="settings"            element={<SettingsPage />} />
             <Route path="environment"          element={<EnvironmentProfile />} />
             <Route path="agent/:id"            element={<AgentInvestigation />} />
+            <Route path="docs"                  element={<Docs />} />
             <Route path="admin" element={
               <AdminRoute><AdminPanel /></AdminRoute>
             } />

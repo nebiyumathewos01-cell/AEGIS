@@ -13,10 +13,11 @@ import QuickGuideModal from './QuickGuideModal'
 const NAV = [
   { to: '/dashboard',           icon: LayoutDashboard, label: 'Dashboard',      group: 'main' },
   { to: '/alerts',              icon: AlertTriangle,   label: 'Alerts',         group: 'main' },
-  { to: '/investigations',      icon: BookOpen,        label: 'Investigations', group: 'main' },
+  { to: '/investigations',      icon: Bot,             label: 'Investigations', group: 'main' },
   { to: '/threat-intelligence', icon: Search,          label: 'Threat Intel',   group: 'tools' },
   { to: '/environment',         icon: Server,          label: 'Env Profile',    group: 'tools' },
   { to: '/audit',               icon: Shield,          label: 'Audit Log',      group: 'tools' },
+  { to: '/docs',                icon: BookOpen,        label: 'Documentation',  group: 'tools' },
   { to: '/settings',            icon: Settings,        label: 'Settings & API', group: 'tools' },
 ]
 export default function Layout() {
