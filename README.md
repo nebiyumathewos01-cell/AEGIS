@@ -61,7 +61,7 @@ AEGIS introduces a **Dual-Engine Architecture**:
            │
            ▼
   ┌─────────────────────────────────┐
-  │ 6. Feedback, Closure & Export   │ ◄── Immutable audit trail, feedback loop & PDF/MD/JSON report export
+  │ 6. Feedback, Closure & Report   │ ◄── Immutable audit trail, feedback loop & 1-click report download
   └─────────────────────────────────┘
 ```
 
@@ -90,10 +90,7 @@ AEGIS introduces a **Dual-Engine Architecture**:
   - AWS CloudTrail JSON events (`AttachUserPolicy`, `CreateAccessKey`, unauthorized IAM calls)
 - **Live Threat Intelligence Engine**: Real-time IP geolocation, ISP/ASN lookup, curated threat actor attribution, Tor exit node detection, and RFC-1918 private network identification.
 - **Tamper-Evident Audit Trail**: Every tool invocation, reasoning step, analyst approval/rejection timestamp, and remediation outcome is permanently recorded with complete telemetry.
-- **1-Click Forensic Incident Report Exports**: Once an investigation completes, analysts can immediately download:
-  - **Executive PDF Report**: Multi-page report with cover brief, deterministic rule breakdown, confirmed evidence, CVEs, HITL decisions, and audit trail.
-  - **Markdown Dossier (`.md`)**: GitHub-flavored format ready for pasting into Jira tickets, ServiceNow incidents, or Slack war rooms.
-  - **Machine Telemetry (`.json`)**: Raw export formatted for SIEM / SOAR pipeline archival.
+- **1-Click Forensic Incident Report Download**: Once an investigation completes, analysts can immediately download the official forensic report containing the executive verdict, deterministic rule breakdown, confirmed evidence, CVEs, HITL decisions, and full chronological audit trail.
 
 ---
 

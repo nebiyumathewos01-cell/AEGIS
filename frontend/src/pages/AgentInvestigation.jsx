@@ -5,7 +5,7 @@ import {
   Shield, Clock, AlertTriangle, Brain, Search,
   ChevronDown, ChevronUp, Star, MessageSquare,
   Cpu, Target, FileSearch, Lock, Bell, Zap,
-  RefreshCw, Filter, Download, FileText
+  RefreshCw, Filter, Download
 } from 'lucide-react'
 import { useAlert } from '../hooks/useAlert'
 import {
@@ -13,9 +13,7 @@ import {
   approveAgentAction, rejectAgentAction,
   submitAgentFeedback,
 } from '../services/api'
-import {
-  generateAgentPDF, downloadAgentMarkdown, downloadAgentJSON
-} from '../utils/pdf'
+import { generateAgentPDF } from '../utils/pdf'
 import Spinner from '../components/Spinner'
 import RiskBadge from '../components/RiskBadge'
 import RiskScoreBar from '../components/RiskScoreBar'
@@ -304,11 +302,10 @@ export default function AgentInvestigation() {
   const [activeTab, setActiveTab]   = useState('report')
   const [loading, setLoading]       = useState(false)
   const [approving, setApproving]   = useState(false)
-  const [showExportMenu, setShowExportMenu] = useState(false)
   const [downloading, setDownloading]       = useState(false)
   const autoRanRef                  = useRef(false)
 
-  function handleDownloadPDF() {
+  function handleDownloadReport() {
     setDownloading(true)
     try {
       generateAgentPDF({
@@ -319,28 +316,7 @@ export default function AgentInvestigation() {
       })
     } finally {
       setDownloading(false)
-      setShowExportMenu(false)
     }
-  }
-
-  function handleDownloadMarkdown() {
-    downloadAgentMarkdown({
-      alert,
-      session: activeSession,
-      actions: activeSession?.pending_actions || [],
-      trail: activeSession?.audit_trail || []
-    })
-    setShowExportMenu(false)
-  }
-
-  function handleDownloadJSON() {
-    downloadAgentJSON({
-      alert,
-      session: activeSession,
-      actions: activeSession?.pending_actions || [],
-      trail: activeSession?.audit_trail || []
-    })
-    setShowExportMenu(false)
   }
 
   async function loadSessions() {
@@ -462,61 +438,18 @@ export default function AgentInvestigation() {
         <div className="flex items-center gap-2 flex-wrap">
           <button onClick={loadSessions} className="btn-ghost p-2" title="Refresh"><RefreshCw className="w-4 h-4" /></button>
 
-          {/* Download Report Dropdown (when session has a report) */}
+          {/* Direct Download Report Button (when session has a report) */}
           {report && (
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setShowExportMenu(prev => !prev)}
-                className="btn-ghost flex items-center gap-1.5 text-xs py-2 px-3 border border-cyber-border hover:border-cyber-accent text-cyber-accent transition-all cursor-pointer"
-                style={{ background: 'var(--surface2)' }}
-                title="Download Investigation Report">
-                <Download className="w-3.5 h-3.5" />
-                <span className="font-semibold">Download Report</span>
-                <ChevronDown className="w-3 h-3 ml-0.5 opacity-70" />
-              </button>
-
-              {showExportMenu && (
-                <div
-                  className="absolute right-0 mt-1.5 w-56 rounded-md shadow-2xl z-50 py-1.5 border border-cyber-border"
-                  style={{ background: 'var(--surface)' }}>
-                  <button
-                    type="button"
-                    onClick={handleDownloadPDF}
-                    disabled={downloading}
-                    className="w-full text-left px-3.5 py-2.5 text-xs flex items-center gap-2.5 hover:bg-cyber-surface2 transition-all cursor-pointer"
-                    style={{ color: 'var(--text)' }}>
-                    <Download className="w-4 h-4 text-cyber-accent shrink-0" />
-                    <div>
-                      <p className="font-bold">Executive PDF Report</p>
-                      <p className="text-[10px]" style={{ color: 'var(--muted)' }}>Official PDF with charts & tables</p>
-                    </div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleDownloadMarkdown}
-                    className="w-full text-left px-3.5 py-2.5 text-xs flex items-center gap-2.5 hover:bg-cyber-surface2 transition-all cursor-pointer"
-                    style={{ color: 'var(--text)' }}>
-                    <FileText className="w-4 h-4 text-cyber-teal shrink-0" />
-                    <div>
-                      <p className="font-bold">Markdown Report (.md)</p>
-                      <p className="text-[10px]" style={{ color: 'var(--muted)' }}>Ready for Jira, Slack & tickets</p>
-                    </div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleDownloadJSON}
-                    className="w-full text-left px-3.5 py-2.5 text-xs flex items-center gap-2.5 hover:bg-cyber-surface2 transition-all cursor-pointer"
-                    style={{ color: 'var(--text)' }}>
-                    <FileSearch className="w-4 h-4 text-purple-400 shrink-0" />
-                    <div>
-                      <p className="font-bold">Raw Telemetry JSON (.json)</p>
-                      <p className="text-[10px]" style={{ color: 'var(--muted)' }}>Machine-readable audit record</p>
-                    </div>
-                  </button>
-                </div>
-              )}
-            </div>
+            <button
+              type="button"
+              onClick={handleDownloadReport}
+              disabled={downloading}
+              className="btn-ghost flex items-center gap-1.5 text-xs py-2 px-3 border border-cyber-border hover:border-cyber-accent text-cyber-accent transition-all cursor-pointer"
+              style={{ background: 'var(--surface2)' }}
+              title="Download Investigation Report">
+              {downloading ? <Spinner size="sm" /> : <Download className="w-3.5 h-3.5" />}
+              <span className="font-semibold">{downloading ? 'Downloading...' : 'Download Report'}</span>
+            </button>
           )}
 
           <button onClick={handleRun} disabled={running}
@@ -687,36 +620,18 @@ export default function AgentInvestigation() {
                       Investigation Report Ready
                     </p>
                     <p className="text-[10px]" style={{ color: 'var(--muted)' }}>
-                      Export full forensic telemetry, deterministic rule factors, threat intelligence, and audit trail.
+                      Download the official forensic report including evidence, rule baseline, and response audit.
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <button
-                    type="button"
-                    onClick={handleDownloadPDF}
-                    disabled={downloading}
-                    className="btn-primary flex items-center gap-1.5 text-xs py-1.5 px-3 cursor-pointer">
-                    <Download className="w-3.5 h-3.5" />
-                    <span>Download PDF</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleDownloadMarkdown}
-                    className="btn-ghost flex items-center gap-1.5 text-xs py-1.5 px-2.5 border border-cyber-border cursor-pointer"
-                    style={{ background: 'var(--surface)', color: 'var(--text)' }}>
-                    <FileText className="w-3.5 h-3.5 text-cyber-teal" />
-                    <span>Markdown</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleDownloadJSON}
-                    className="btn-ghost flex items-center gap-1.5 text-xs py-1.5 px-2.5 border border-cyber-border cursor-pointer"
-                    style={{ background: 'var(--surface)', color: 'var(--text)' }}>
-                    <FileSearch className="w-3.5 h-3.5 text-purple-400" />
-                    <span>JSON</span>
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={handleDownloadReport}
+                  disabled={downloading}
+                  className="btn-primary flex items-center gap-1.5 text-xs py-2 px-4 cursor-pointer">
+                  {downloading ? <Spinner size="sm" /> : <Download className="w-3.5 h-3.5" />}
+                  <span className="font-semibold">{downloading ? 'Downloading...' : 'Download Report'}</span>
+                </button>
               </div>
 
               {/* Deterministic Rule Engine Authority Panel */}

@@ -135,7 +135,7 @@ export default function Docs() {
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle2 className="w-4 h-4 text-cyber-teal shrink-0 mt-0.5" />
-                <span><strong className="text-cyber-text">Multi-Format Incident Reporting</strong>: Instant 1-click generation of comprehensive Executive PDF reports, Markdown documentation (for Jira/Confluence/Slack), and raw JSON telemetry upon investigation completion.</span>
+                <span><strong className="text-cyber-text">Instant Report Download</strong>: 1-click download of the official forensic Investigation Report containing telemetry, deterministic rule factors, and approval audit trails upon investigation completion.</span>
               </li>
             </ul>
           </div>
@@ -151,7 +151,7 @@ export default function Docs() {
               AEGIS governs the entire alert journey from raw log ingestion to verified remediation, continuous feedback, and formal incident documentation:
             </p>
             <div className="p-3 rounded bg-cyber-bg border border-cyber-border font-mono text-xs text-cyber-accent text-center mb-6 overflow-x-auto">
-              Raw Alert → Agent Loop → Guardrails → Human Approval → Safe Response → Feedback & Report Export
+              Raw Alert → Agent Loop → Guardrails → Human Approval → Safe Response → Feedback & Report Download
             </div>
 
             <div className="space-y-4">
@@ -188,9 +188,9 @@ export default function Docs() {
                 },
                 {
                   num: '06',
-                  title: 'Feedback Loop & Report Export',
+                  title: 'Feedback Loop & Report Download',
                   color: '#a855f7',
-                  desc: 'The analyst rates investigation accuracy (1–5 stars, false-positive marker, comments) to close the lifecycle. Analysts can immediately export the complete investigation as an official Executive PDF report, Markdown for ticketing systems (Jira/ServiceNow), or structured JSON.'
+                  desc: 'The analyst rates investigation accuracy (1–5 stars, false-positive marker, comments) to close the lifecycle. Analysts can immediately download the complete official forensic investigation report.'
                 },
               ].map(step => (
                 <div key={step.num} className="p-4 rounded border border-cyber-border bg-cyber-surface2 flex gap-4 items-start">
@@ -206,34 +206,23 @@ export default function Docs() {
             </div>
           </div>
 
-          {/* Report Export Architecture Card */}
+          {/* Report Download Architecture Card */}
           <div className="card">
             <h3 className="text-sm font-bold text-cyber-text mb-2 flex items-center gap-2">
               <BookOpen className="w-4 h-4 text-cyber-accent" />
-              Incident Report & Compliance Export Formats
+              Forensic Investigation Report Download
             </h3>
             <p className="text-xs text-cyber-muted mb-4 leading-relaxed">
-              Once the Agentic AI concludes its multi-turn investigation, analysts can download a comprehensive, courtroom-ready forensic dossier in three distinct formats:
+              Once the Agentic AI concludes its investigation, analysts can download a comprehensive, boardroom-ready forensic dossier with 1 click:
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="p-3 rounded border border-cyber-border bg-cyber-surface2">
-                <p className="text-xs font-bold text-cyber-accent mb-1">Executive PDF Report</p>
-                <p className="text-[11px] text-cyber-muted leading-relaxed">
-                  Professional multi-page PDF featuring executive verdict, deterministic RuleEngine baseline, MITRE factors, CVE analysis, human approval records, and full audit logs.
-                </p>
-              </div>
-              <div className="p-3 rounded border border-cyber-border bg-cyber-surface2">
-                <p className="text-xs font-bold text-cyber-teal mb-1">Markdown Dossier (.md)</p>
-                <p className="text-[11px] text-cyber-muted leading-relaxed">
-                  GitHub-flavored markdown formatted for instant pasting into Jira tickets, ServiceNow incidents, Slack war rooms, or internal security wikis.
-                </p>
-              </div>
-              <div className="p-3 rounded border border-cyber-border bg-cyber-surface2">
-                <p className="text-xs font-bold text-purple-400 mb-1">Machine Telemetry (.json)</p>
-                <p className="text-[11px] text-cyber-muted leading-relaxed">
-                  Raw JSON telemetry containing the complete agent session, tool parameters, raw audit events, and analyst approval metadata for SIEM / SOAR pipeline ingestion.
-                </p>
-              </div>
+            <div className="p-4 rounded border border-cyber-border bg-cyber-surface2 space-y-2 text-xs">
+              <p className="font-bold text-cyber-accent">Official Forensic Report Contents</p>
+              <ul className="space-y-1.5 text-cyber-muted list-disc list-inside">
+                <li><strong className="text-cyber-text">Executive Verdict & Confidence</strong>: Final AI verdict, confidence score, and contextual summary.</li>
+                <li><strong className="text-cyber-text">Deterministic RuleEngine Baseline</strong>: Objective ground-truth score (0–100) and evaluated MITRE rule factor deltas.</li>
+                <li><strong className="text-cyber-text">Autonomous Findings & Evidence</strong>: Corroborated IOCs, attack timelines, and threat intelligence.</li>
+                <li><strong className="text-cyber-text">Human-in-the-Loop Actions & Audit Log</strong>: Timestamped records of analyst approvals, rejections, and execution outcomes.</li>
+              </ul>
             </div>
           </div>
         </div>
