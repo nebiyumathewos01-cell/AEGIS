@@ -309,7 +309,14 @@ export default function AlertDetail() {
         <div className="space-y-4">
 
           {/* Risk Score */}
-          <Section icon={AlertTriangle} title="Risk Score">
+          <Section icon={Shield} title="Rule Engine Risk Score">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded font-bold"
+                style={{ background: 'rgba(0, 229, 153, 0.12)', color: 'var(--accent)', border: '1px solid rgba(0, 229, 153, 0.3)' }}>
+                Deterministic Rule Authority
+              </span>
+              <span className="text-[10px]" style={{ color: 'var(--muted)' }}>Unchanged by AI</span>
+            </div>
             <RiskScoreBar score={alert.risk_score} level={alert.risk_level} />
             <div className="mt-4 space-y-2">
               {riskFactors.map((f, i) => (

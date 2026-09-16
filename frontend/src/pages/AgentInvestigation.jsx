@@ -15,6 +15,7 @@ import {
 } from '../services/api'
 import Spinner from '../components/Spinner'
 import RiskBadge from '../components/RiskBadge'
+import RiskScoreBar from '../components/RiskScoreBar'
 import { formatAlertType, riskColor } from '../utils/risk'
 import { fmtDate } from '../utils/format'
 
@@ -491,38 +492,62 @@ export default function AgentInvestigation() {
       {s && (
         <>
           {/* Summary bar */}
-          <div className="panel mb-4" style={{ borderLeft: `3px solid ${riskColor(s.final_risk_level)}` }}>
+          <div className="panel mb-4" style={{ borderLeft: `3px solid ${riskColor(alert.risk_level)}` }}>
             <div className="flex items-start justify-between gap-4 flex-wrap">
               <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded font-mono"
+                    style={{ background: 'rgba(168,85,247,0.12)', color: '#a855f7', border: '1px solid rgba(168,85,247,0.3)' }}>
+                    Agentic AI Assistant
+                  </span>
+                  <span className="text-xs font-mono" style={{ color: 'var(--muted)' }}>
+                    Iteration {s.iteration}
+                  </span>
+                </div>
                 <p className="text-sm font-bold mb-1" style={{ color: 'var(--text)' }}>{s.verdict}</p>
                 <p className="text-xs" style={{ color: 'var(--muted)' }}>
-                  {s.iteration} iteration(s) ·{' '}
-                  Phase: <span style={{ color: s.phase === 'awaiting_approval' ? '#f59e0b' : 'var(--teal)' }}>
+                  Phase: <span className="font-semibold uppercase text-[11px]" style={{ color: s.phase === 'awaiting_approval' ? '#f59e0b' : 'var(--teal)' }}>
                     {s.phase.replace('_', ' ')}
                   </span>
                 </p>
               </div>
-              <div className="flex items-center gap-3 shrink-0">
-                <RiskBadge level={s.final_risk_level} />
+
+              {/* Rule Engine Risk Authority Box */}
+              <div className="flex items-center gap-3 shrink-0 p-3 rounded"
+                style={{ background: 'var(--surface2)', border: '1px solid var(--border)' }}>
                 <div className="text-right">
-                  <p className="text-2xl font-black" style={{ color: riskColor(s.final_risk_level) }}>
-                    {Math.round(s.final_risk_score)}
+                  <div className="flex items-center gap-1.5 justify-end mb-1">
+                    <span className="text-[10px] font-bold uppercase font-mono px-1.5 py-0.5 rounded"
+                      style={{ background: 'rgba(0, 229, 153, 0.12)', color: 'var(--accent)', border: '1px solid rgba(0, 229, 153, 0.3)' }}>
+                      Rule Engine
+                    </span>
+                    <RiskBadge level={alert.risk_level} />
+                  </div>
+                  <p className="text-2xl font-black leading-none" style={{ color: riskColor(alert.risk_level) }}>
+                    {Math.round(alert.risk_score)}
+                    <span className="text-xs font-normal" style={{ color: 'var(--muted)' }}>/100</span>
                   </p>
-                  <p className="text-[10px]" style={{ color: 'var(--muted)' }}>risk score</p>
+                  <p className="text-[10px] font-mono mt-0.5" style={{ color: 'var(--muted)' }}>
+                    Deterministic Baseline
+                  </p>
                 </div>
               </div>
             </div>
+
             {/* Confidence bar */}
             <div className="mt-3 space-y-1">
               <div className="flex justify-between text-xs">
-                <span style={{ color: 'var(--muted)' }}>Agent Confidence</span>
+                <span style={{ color: 'var(--muted)' }}>Agent Confidence in Evidence</span>
                 <span className="font-bold" style={{ color: 'var(--teal)' }}>
                   {s.confidence_label} ({s.confidence_score}%)
                 </span>
               </div>
-              <div className="h-1.5 rounded" style={{ background: 'var(--border)' }}>
-                <div className="h-full rounded"
-                  style={{ width: `${s.confidence_score}%`, background: 'var(--teal)' }} />
+              <div className="h-1.5 rounded overflow-hidden" style={{ background: 'var(--border)' }}>
+                <div className="h-full rounded transition-all duration-500"
+                  style={{
+                    width: `${s.confidence_score}%`,
+                    background: s.confidence_label === 'HIGH' ? 'var(--teal)' : s.confidence_label === 'MEDIUM' ? '#f59e0b' : 'var(--muted)',
+                  }} />
               </div>
             </div>
           </div>
@@ -551,6 +576,47 @@ export default function AgentInvestigation() {
           {/* Report tab */}
           {activeTab === 'report' && report && (
             <div className="space-y-4">
+              {/* Deterministic Rule Engine Authority Panel */}
+              <div className="panel" style={{ borderLeft: '3px solid var(--accent)' }}>
+                <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <Shield className="w-4 h-4" style={{ color: 'var(--accent)' }} />
+                    <p className="section-title mb-0">Deterministic Rule Engine Evaluation</p>
+                  </div>
+                  <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded font-bold"
+                    style={{ background: 'rgba(0, 229, 153, 0.12)', color: 'var(--accent)', border: '1px solid rgba(0, 229, 153, 0.3)' }}>
+                    Immutable Rule Authority
+                  </span>
+                </div>
+                <p className="text-xs mb-3" style={{ color: 'var(--muted)' }}>
+                  Risk score (<strong style={{ color: 'var(--text)' }}>{Math.round(alert.risk_score)}/100 · {alert.risk_level}</strong>) is strictly calculated by AEGIS's heuristic <span style={{ color: 'var(--accent)' }}>RuleEngine</span>. The Agentic AI does <strong>NOT</strong> modify or lead the risk score—its role is autonomous evidence correlation, threat verification, timeline building, and proposing human-approved responses.
+                </p>
+                <div className="mb-3">
+                  <RiskScoreBar score={alert.risk_score} level={alert.risk_level} />
+                </div>
+                {alert.risk_factors && alert.risk_factors.length > 0 && (
+                  <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--border)' }}>
+                    <p className="text-xs font-semibold mb-2" style={{ color: 'var(--muted)' }}>
+                      Evaluated Rule Factors ({alert.risk_factors.length})
+                    </p>
+                    <div className="space-y-1.5">
+                      {alert.risk_factors.map((rf, i) => (
+                        <div key={i} className="flex items-center justify-between text-xs p-2 rounded"
+                          style={{ background: 'var(--surface2)', border: '1px solid var(--border)' }}>
+                          <div className="flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full" style={{ background: riskColor(alert.risk_level) }} />
+                            <span style={{ color: 'var(--text)' }}>{rf.description}</span>
+                          </div>
+                          <span className="font-mono font-bold shrink-0" style={{ color: riskColor(alert.risk_level) }}>
+                            +{rf.score_delta}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div className="panel">
                 <p className="section-title">Summary</p>
                 <p className="text-sm" style={{ color: 'var(--text)' }}>{report.summary}</p>

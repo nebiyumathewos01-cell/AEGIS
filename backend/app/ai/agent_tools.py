@@ -210,14 +210,17 @@ async def lookup_threat_intelligence(ioc: str) -> dict:
     return tool_result("threat_intelligence", ti_data, summary)
 
 
-# ── Tool 3: Deep risk re-evaluation ──────────────────────────────────────────
+# ── Tool 3: Rule Engine baseline verification ─────────────────────────────────
 
 def evaluate_risk_with_context(
     parsed_data: dict,
     threat_intel: dict | None = None,
     related_alert_count: int = 0,
 ) -> dict:
-    """Re-evaluate risk score with additional context from other tools."""
+    """
+    Inspect and verify the immutable baseline risk score computed by the Rule Engine.
+    RuleEngine maintains sole scoring authority — Agentic AI does NOT alter or calculate the risk score.
+    """
     from app.parsers.base import ParsedAlert
 
     # Reconstruct ParsedAlert from dict
@@ -240,52 +243,28 @@ def evaluate_risk_with_context(
 
     base_result = _rule_engine.analyze(p)
 
-    # Bonus scoring from agent context
-    bonus = 0
-    bonus_factors = []
-
-    if threat_intel and threat_intel.get("malicious_count", 0) >= 5:
-        bonus += 20
-        bonus_factors.append(f"+20 Threat intel: IP flagged by {threat_intel['malicious_count']} vendors")
-    elif threat_intel and threat_intel.get("malicious_count", 0) > 0:
-        bonus += 10
-        bonus_factors.append(f"+10 Threat intel: IP has {threat_intel['malicious_count']} malicious detections")
-
-    if related_alert_count >= 5:
-        bonus += 15
-        bonus_factors.append(f"+15 Attack campaign: {related_alert_count} related alerts detected")
-    elif related_alert_count >= 2:
-        bonus += 8
-        bonus_factors.append(f"+8 Repeated activity: {related_alert_count} related alerts")
-
-    final_score = min(100, base_result.risk_score + bonus)
-    if final_score >= 80:    level = "CRITICAL"
-    elif final_score >= 60:  level = "HIGH"
-    elif final_score >= 30:  level = "MEDIUM"
-    else:                    level = "LOW"
-
-    all_factors = [{"description": f.description, "score_delta": f.score_delta}
+    all_factors = [{"description": f.description, "score_delta": f.score_delta, "rule": getattr(f, "rule", "")}
                    for f in base_result.risk_factors]
-    for bf in bonus_factors:
-        delta = int(bf.split("+")[1].split(" ")[0])
-        all_factors.append({"description": bf.split(" ", 1)[1], "score_delta": delta})
 
     result = {
+        "engine":          "RuleEngine (Deterministic Heuristic)",
         "rule_risk_score": base_result.risk_score,
         "rule_risk_level": base_result.risk_level,
-        "base_score":      base_result.risk_score,
-        "bonus_score":     bonus,
-        "final_score":     base_result.risk_score,  # Rule-based score is preserved unchanged
-        "risk_level":      base_result.risk_level,   # Rule-based level is preserved unchanged
-        "context_score":   final_score,
-        "context_level":   level,
+        "final_score":     base_result.risk_score,
+        "risk_level":      base_result.risk_level,
+        "factors_count":   len(all_factors),
         "all_factors":     all_factors,
+        "authority":       "RuleEngine sole authority — Agentic AI does not alter risk scores",
     }
     summary = (
-        f"Rule-based risk score preserved: {int(base_result.risk_score)}/100 ({base_result.risk_level}). "
-        f"Investigation context bonus: +{bonus} ({level} contextual severity)."
+        f"Rule Engine baseline verified: {int(base_result.risk_score)}/100 ({base_result.risk_level}) "
+        f"across {len(all_factors)} rule factor(s). Agentic AI retains zero scoring influence."
     )
-    return tool_result("evaluate_risk", result, summary)
+    return tool_result("inspect_rule_engine", result, summary)
+
+
+# Alias for backward compatibility
+inspect_rule_engine_baseline = evaluate_risk_with_context
 
 
 # ── Tool 4: Build attack timeline ────────────────────────────────────────────

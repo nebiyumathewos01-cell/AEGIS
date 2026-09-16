@@ -517,14 +517,14 @@ class SOCAgent:
                 result = await lookup_cve(alert.alert_type, alert.protocol)
                 self.evidence["cves"] = result["result"].get("cves", [])
 
-            elif tool_name == "evaluate_risk":
+            elif tool_name in ("evaluate_risk", "inspect_rule_engine"):
                 result = evaluate_risk_with_context(
                     alert_data,
                     threat_intel=self.evidence.get("threat_intel"),
                     related_alert_count=self.evidence.get("related_count", 0),
                 )
                 self.evidence["risk_result"] = result["result"]
-                self.evidence["risk_score"]  = result["result"].get("final_score", alert.risk_score)
+                self.evidence["risk_score"]  = alert.risk_score  # RuleEngine sole authority
 
             if result:
                 self._audit(
@@ -565,7 +565,7 @@ class SOCAgent:
         ):
             needed.append("cve_lookup")
         if "risk_result" not in self.evidence:
-            needed.append("evaluate_risk")
+            needed.append("inspect_rule_engine")
 
         # Second iteration: if TI shows threat, search broader
         if (self.iterations == 2 and
@@ -753,8 +753,11 @@ class SOCAgent:
             "verdict":           final_data.get("verdict", ""),
             "confidence":        final_data.get("confidence", "MEDIUM"),
             "confidence_score":  final_data.get("confidence_score", 50),
-            "final_risk_level":  final_data.get("final_risk_level", alert.risk_level),
-            "final_risk_score":  final_data.get("final_risk_score", alert.risk_score),
+            "final_risk_level":  alert.risk_level,
+            "final_risk_score":  alert.risk_score,
+            "rule_risk_level":   alert.risk_level,
+            "rule_risk_score":   alert.risk_score,
+            "rule_factors":      alert.risk_factors or [],
             "evidence_summary":  self._build_evidence_summary(alert, evidence),
             "key_findings":      key_findings,
             "cves_found":        evidence.get("cves", []),
@@ -763,5 +766,5 @@ class SOCAgent:
             "iterations_used":   self.iterations,
             "actions_proposed":  len(proposed_actions),
             "actions_requiring_approval": len([a for a in proposed_actions if a.requires_approval]),
-            "risk_factors":      evidence.get("risk_result", {}).get("all_factors", []),
+            "risk_factors":      alert.risk_factors or evidence.get("risk_result", {}).get("all_factors", []),
         }
